@@ -38,6 +38,14 @@ class InterpolationExercise extends Exercise {
     /** @type {THREE.Line} */
     #lineObject = undefined;
 
+    /** @type {THREE.Vector3[]} */
+    #animationPoints = [];
+
+    /** @type {number[]} */
+    #arcLengths = [];
+
+    #totalArcLength = 0;
+
     #params = {
         interpolation: InterpolationType.LINEAR,
         interval: 0.1,
@@ -299,7 +307,15 @@ class InterpolationExercise extends Exercise {
      * You can precompute and store any other information that is required during the animation here.
      */
     onAnimationStart() {
-        // Your code here
+        this.#animationPoints = this.sampleCurvePositions();
+
+        // Build a cumulative arc-length table for constant-speed parameterisation
+        this.#arcLengths = [0];
+        for (let i = 1; i < this.#animationPoints.length; i++) {
+            const segLen = this.#animationPoints[i].distanceTo(this.#animationPoints[i - 1]);
+            this.#arcLengths.push(this.#arcLengths[i - 1] + segLen);
+        }
+        this.#totalArcLength = this.#arcLengths[this.#arcLengths.length - 1];
     }
 
     /**
@@ -316,8 +332,33 @@ class InterpolationExercise extends Exercise {
      * @returns {boolean} true if animation should continue, false if it should stop
      */
     onAnimationUpdate(elapsedTime, object) {
-        // Your code here
-        return false;
+        if (this.#animationPoints.length === 0 || this.#totalArcLength === 0) {
+            return false;
+        }
+
+        const speed = 10; // world units per second
+        const targetDist = elapsedTime * speed;
+
+        if (targetDist >= this.#totalArcLength) {
+            object.position.copy(this.#animationPoints[this.#animationPoints.length - 1]);
+            return false;
+        }
+
+        // Binary search for the segment containing targetDist
+        let lo = 0, hi = this.#arcLengths.length - 2;
+        while (lo < hi) {
+            const mid = (lo + hi + 1) >> 1;
+            if (this.#arcLengths[mid] <= targetDist) lo = mid; else hi = mid - 1;
+        }
+        const k = lo;
+
+        // Interpolate within the segment for sub-sample precision
+        const segStart = this.#arcLengths[k];
+        const segEnd = this.#arcLengths[k + 1];
+        const t = segEnd > segStart ? (targetDist - segStart) / (segEnd - segStart) : 0;
+        object.position.lerpVectors(this.#animationPoints[k], this.#animationPoints[k + 1], t);
+
+        return true;
     }
     //TASK5 - end
 }

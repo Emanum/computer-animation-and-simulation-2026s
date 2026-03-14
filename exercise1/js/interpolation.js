@@ -14,8 +14,17 @@ import { ControlPoint } from "./control-point.js";
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateLinear(points, interval) {
-    // Your code here
-    return [];
+    if (points.length < 2) return [];
+    const result = [];
+    for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i].position;
+        const p1 = points[i + 1].position;
+        for (let t = 0; t < 1; t += interval) {
+            result.push(new THREE.Vector3().lerpVectors(p0, p1, t));
+        }
+    }
+    result.push(points[points.length - 1].position.clone());
+    return result;
 }
 //TASK1 - end
 
@@ -34,8 +43,31 @@ export function interpolateLinear(points, interval) {
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateHermiteSpline(points, interval) {
-    // Your code here
-    return [];
+    if (points.length < 2) return [];
+    const result = [];
+    for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i].position;
+        const p1 = points[i + 1].position;
+        const m0 = points[i].tangentHermite;
+        const m1 = points[i + 1].tangentHermite;
+
+        for (let t = 0; t < 1; t += interval) {
+            const t2 = t * t;
+            const t3 = t2 * t;
+            const h00 = 2*t3 - 3*t2 + 1;
+            const h10 = t3 - 2*t2 + t;
+            const h01 = -2*t3 + 3*t2;
+            const h11 = t3 - t2;
+
+            result.push(new THREE.Vector3()
+                .addScaledVector(p0, h00)
+                .addScaledVector(m0, h10)
+                .addScaledVector(p1, h01)
+                .addScaledVector(m1, h11));
+        }
+    }
+    result.push(points[points.length - 1].position.clone());
+    return result;
 }
 //TASK2 - end
 
@@ -49,8 +81,27 @@ export function interpolateHermiteSpline(points, interval) {
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateBezierSpline(points, interval) {
-    // Your code here
-    return [];
+    if (points.length < 2) return [];
+    const result = [];
+    for (let i = 0; i < points.length - 1; i++) {
+        // P0 and P3 are the endpoint positions
+        const P0 = points[i].position;
+        const P3 = points[i + 1].position;
+        // P1 and P2 are world-space control points derived from the local tangent handles
+        const P1 = P0.clone().add(points[i].tangentBezierForward);
+        const P2 = P3.clone().add(points[i + 1].tangentBezierBackward);
+
+        for (let t = 0; t < 1; t += interval) {
+            const mt = 1 - t;
+            result.push(new THREE.Vector3()
+                .addScaledVector(P0, mt * mt * mt)
+                .addScaledVector(P1, 3 * mt * mt * t)
+                .addScaledVector(P2, 3 * mt * t * t)
+                .addScaledVector(P3, t * t * t));
+        }
+    }
+    result.push(points[points.length - 1].position.clone());
+    return result;
 }
 //TASK3 - end
 
@@ -63,7 +114,38 @@ export function interpolateBezierSpline(points, interval) {
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateCatmullRom(points, interval) {
-    // Your code here
-    return [];
+    if (points.length < 4) return [];
+    const result = [];
+    // Segments run from index 1 to index n-2; first and last sections are ignored
+    for (let i = 1; i < points.length - 2; i++) {
+        const pPrev = points[i - 1].position;
+        const p0 = points[i].position;
+        const p1 = points[i + 1].position;
+        const pNext = points[i + 2].position;
+
+        // Catmull-Rom tangents: m_i = (p_{i+1} - p_{i-1}) / 2
+        const m0 = p1.clone().sub(pPrev).multiplyScalar(0.5);
+        const m1 = pNext.clone().sub(p0).multiplyScalar(0.5);
+
+        for (let t = 0; t < 1; t += interval) {
+            const t2 = t * t;
+            const t3 = t2 * t;
+            const h00 = 2*t3 - 3*t2 + 1;
+            const h10 = t3 - 2*t2 + t;
+            const h01 = -2*t3 + 3*t2;
+            const h11 = t3 - t2;
+
+            result.push(new THREE.Vector3()
+                .addScaledVector(p0, h00)
+                .addScaledVector(m0, h10)
+                .addScaledVector(p1, h01)
+                .addScaledVector(m1, h11));
+        }
+    }
+    // Add the last point of the last processed segment.
+    // Note: per the task description, the first and last segments are intentionally skipped
+    // for Catmull-Rom, so the curve spans from points[1] to points[n-2].
+    result.push(points[points.length - 2].position.clone());
+    return result;
 }
 //TASK4 - end
