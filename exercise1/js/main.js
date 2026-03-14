@@ -38,6 +38,14 @@ class InterpolationExercise extends Exercise {
     /** @type {THREE.Line} */
     #lineObject = undefined;
 
+    /** @type {THREE.Vector3[]} */
+    #animationPath = [];
+
+    /** @type {number[]} */
+    #animationCumulativeDistances = [];
+
+    #animationSpeed = 5;
+
     #params = {
         interpolation: InterpolationType.LINEAR,
         interval: 0.1,
@@ -299,7 +307,19 @@ class InterpolationExercise extends Exercise {
      * You can precompute and store any other information that is required during the animation here.
      */
     onAnimationStart() {
-        // Your code here
+        this.#animationPath = this.sampleCurvePositions();
+        this.#animationCumulativeDistances = [];
+
+        if (this.#animationPath.length < 2) {
+            return;
+        }
+
+        let length = 0;
+        this.#animationCumulativeDistances.push(0);
+        for (let i = 1; i < this.#animationPath.length; i++) {
+            length += this.#animationPath[i - 1].distanceTo(this.#animationPath[i]);
+            this.#animationCumulativeDistances.push(length);
+        }
     }
 
     /**
@@ -316,8 +336,38 @@ class InterpolationExercise extends Exercise {
      * @returns {boolean} true if animation should continue, false if it should stop
      */
     onAnimationUpdate(elapsedTime, object) {
-        // Your code here
-        return false;
+        if (this.#animationPath.length < 2) {
+            return false;
+        }
+
+        const totalLength = this.#animationCumulativeDistances.at(-1);
+        if (totalLength === 0) {
+            object.position.copy(this.#animationPath[0]);
+            return false;
+        }
+        const distanceTravelled = elapsedTime * this.#animationSpeed;
+
+        if (distanceTravelled >= totalLength) {
+            object.position.copy(this.#animationPath.at(-1));
+            return false;
+        }
+
+        let segmentIndex = 0;
+        for (let i = 0; i < this.#animationCumulativeDistances.length - 1; i++) {
+            if (distanceTravelled >= this.#animationCumulativeDistances[i]
+                && distanceTravelled <= this.#animationCumulativeDistances[i + 1]) {
+                segmentIndex = i;
+                break;
+            }
+        }
+
+        const segmentStart = this.#animationCumulativeDistances[segmentIndex];
+        const segmentEnd = this.#animationCumulativeDistances[segmentIndex + 1];
+        const t = (distanceTravelled - segmentStart) / (segmentEnd - segmentStart);
+        const position = this.#animationPath[segmentIndex].clone().lerp(this.#animationPath[segmentIndex + 1], t);
+        object.position.copy(position);
+
+        return true;
     }
     //TASK5 - end
 }

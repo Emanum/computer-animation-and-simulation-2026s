@@ -14,8 +14,23 @@ import { ControlPoint } from "./control-point.js";
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateLinear(points, interval) {
-    // Your code here
-    return [];
+    if (points.length < 2) {
+        return [];
+    }
+
+    const sampledPoints = [];
+    for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i].position;
+        const p1 = points[i + 1].position;
+        const startT = i === 0 ? 0 : interval;
+
+        for (let t = startT; t < 1; t += interval) {
+            sampledPoints.push(new THREE.Vector3().lerpVectors(p0, p1, t));
+        }
+        sampledPoints.push(p1.clone());
+    }
+
+    return sampledPoints;
 }
 //TASK1 - end
 
@@ -34,8 +49,39 @@ export function interpolateLinear(points, interval) {
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateHermiteSpline(points, interval) {
-    // Your code here
-    return [];
+    if (points.length < 2) {
+        return [];
+    }
+
+    const sampledPoints = [];
+    const hermite = (p0, p1, m0, m1, t) => {
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const h00 = 2 * t3 - 3 * t2 + 1;
+        const h10 = t3 - 2 * t2 + t;
+        const h01 = -2 * t3 + 3 * t2;
+        const h11 = t3 - t2;
+        return new THREE.Vector3()
+            .addScaledVector(p0, h00)
+            .addScaledVector(m0, h10)
+            .addScaledVector(p1, h01)
+            .addScaledVector(m1, h11);
+    };
+
+    for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i].position;
+        const p1 = points[i + 1].position;
+        const m0 = points[i].tangentHermite;
+        const m1 = points[i + 1].tangentHermite;
+        const startT = i === 0 ? 0 : interval;
+
+        for (let t = startT; t < 1; t += interval) {
+            sampledPoints.push(hermite(p0, p1, m0, m1, t));
+        }
+        sampledPoints.push(p1.clone());
+    }
+
+    return sampledPoints;
 }
 //TASK2 - end
 
@@ -49,8 +95,38 @@ export function interpolateHermiteSpline(points, interval) {
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateBezierSpline(points, interval) {
-    // Your code here
-    return [];
+    if (points.length < 2) {
+        return [];
+    }
+
+    const sampledPoints = [];
+    const bezier = (p0, c1, c2, p1, t) => {
+        const u = 1 - t;
+        const u2 = u * u;
+        const u3 = u2 * u;
+        const t2 = t * t;
+        const t3 = t2 * t;
+        return new THREE.Vector3()
+            .addScaledVector(p0, u3)
+            .addScaledVector(c1, 3 * u2 * t)
+            .addScaledVector(c2, 3 * u * t2)
+            .addScaledVector(p1, t3);
+    };
+
+    for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i].position;
+        const p1 = points[i + 1].position;
+        const c1 = p0.clone().add(points[i].tangentBezierForward);
+        const c2 = p1.clone().add(points[i + 1].tangentBezierBackward);
+        const startT = i === 0 ? 0 : interval;
+
+        for (let t = startT; t < 1; t += interval) {
+            sampledPoints.push(bezier(p0, c1, c2, p1, t));
+        }
+        sampledPoints.push(p1.clone());
+    }
+
+    return sampledPoints;
 }
 //TASK3 - end
 
@@ -63,7 +139,47 @@ export function interpolateBezierSpline(points, interval) {
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateCatmullRom(points, interval) {
-    // Your code here
-    return [];
+    if (points.length < 4) {
+        return [];
+    }
+
+    const sampledPoints = [];
+    const catmullRom = (p0, p1, p2, p3, t) => {
+        const t2 = t * t;
+        const t3 = t2 * t;
+        return new THREE.Vector3()
+            .addScaledVector(p1, 2)
+            .addScaledVector(p2.clone().sub(p0), t)
+            .addScaledVector(
+                p0.clone().multiplyScalar(2)
+                    .addScaledVector(p1, -5)
+                    .addScaledVector(p2, 4)
+                    .addScaledVector(p3, -1),
+                t2
+            )
+            .addScaledVector(
+                p0.clone().multiplyScalar(-1)
+                    .addScaledVector(p1, 3)
+                    .addScaledVector(p2, -3)
+                    .addScaledVector(p3, 1),
+                t3
+            )
+            .multiplyScalar(0.5);
+    };
+
+    for (let i = 1; i < points.length - 2; i++) {
+        const p0 = points[i - 1].position;
+        const p1 = points[i].position;
+        const p2 = points[i + 1].position;
+        const p3 = points[i + 2].position;
+        const startT = i === 1 ? 0 : interval;
+
+        for (let t = startT; t < 1; t += interval) {
+            sampledPoints.push(catmullRom(p0, p1, p2, p3, t));
+        }
+        sampledPoints.push(p2.clone());
+    }
+
+    return sampledPoints;
 }
 //TASK4 - end
