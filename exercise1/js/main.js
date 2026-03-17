@@ -299,7 +299,21 @@ class InterpolationExercise extends Exercise {
      * You can precompute and store any other information that is required during the animation here.
      */
     onAnimationStart() {
-        // Your code here
+        // Store the sampled curve positions
+        this.animationPositions = this.sampleCurvePositions();
+
+        // Calculate cumulative arc length for constant speed animation
+        this.animationArcLengths = [0];
+        let totalLength = 0;
+
+        for (let i = 1; i < this.animationPositions.length; i++) {
+            const segmentLength = this.animationPositions[i - 1].distanceTo(this.animationPositions[i]);
+            totalLength += segmentLength;
+            this.animationArcLengths.push(totalLength);
+        }
+
+        this.animationTotalLength = totalLength;
+        this.animationSpeed = 5; // Units per second - adjust for desired speed
     }
 
     /**
@@ -307,17 +321,57 @@ class InterpolationExercise extends Exercise {
      * It receives the elapsed time since animation start in seconds as well as a 3D object.
      * Update the position of the object based on the elapsed time and sampled positions.
      * See the documentation of {@link THREE.Object3D} for more details on how to update the position.
-     * 
+     *
      * The return value of this function determines if the animation should continue running.
      * Return true to continue, return false to stop (i.e. if end of curve was reached).
-     * 
+     *
      * @param {number} elapsedTime time passed since animation start in seconds
      * @param {THREE.Object3D} object object to move along the curve
      * @returns {boolean} true if animation should continue, false if it should stop
      */
     onAnimationUpdate(elapsedTime, object) {
-        // Your code here
-        return false;
+        if (!this.animationPositions || this.animationPositions.length === 0) {
+            return false;
+        }
+
+        // Calculate the target arc length based on constant speed
+        const targetArcLength = elapsedTime * this.animationSpeed;
+
+        // Check if we've reached the end
+        if (targetArcLength >= this.animationTotalLength) {
+            object.position.copy(this.animationPositions[this.animationPositions.length - 1]);
+            return false;
+        }
+
+        // Find the segment containing the target arc length using binary search
+        let left = 0;
+        let right = this.animationArcLengths.length - 1;
+
+        while (left < right - 1) {
+            const mid = Math.floor((left + right) / 2);
+            if (this.animationArcLengths[mid] <= targetArcLength) {
+                left = mid;
+            } else {
+                right = mid;
+            }
+        }
+
+        // Interpolate between the two points
+        const segmentStart = this.animationArcLengths[left];
+        const segmentEnd = this.animationArcLengths[right];
+        const segmentLength = segmentEnd - segmentStart;
+
+        if (segmentLength > 0) {
+            const t = (targetArcLength - segmentStart) / segmentLength;
+            const p0 = this.animationPositions[left];
+            const p1 = this.animationPositions[right];
+
+            object.position.lerpVectors(p0, p1, t);
+        } else {
+            object.position.copy(this.animationPositions[left]);
+        }
+
+        return true;
     }
     //TASK5 - end
 }
