@@ -47,14 +47,14 @@ export function interpolateLinear(points, interval) {
         let nOfStepsPerSegment = Math.ceil(1 / interval);
 
         for (let j = 0; j < nOfStepsPerSegment; j++) {
-            let percentageToEnd = 1 / nOfStepsPerSegment; // percentage of the way we are along the segment (0.1, 0.2, 0.3 etc.)
+            let percentageToEnd = 1 / nOfStepsPerSegment * j; // percentage of the way we are along the segment (0.1, 0.2, 0.3 etc.)
             let percentageToStart = 1 - percentageToEnd; // percentage of the way we are along the segment (0.9, 0.8, 0.7 etc.)
 
 
             res.push(new THREE.Vector3(
                 percentageToStart * startPoint.x + percentageToEnd * endPoint.x,
-                percentageToStart * endPoint.y + percentageToEnd * endPoint.y,
-                percentageToStart * endPoint.z + percentageToEnd * endPoint.z,
+                percentageToStart * startPoint.y + percentageToEnd * endPoint.y,
+                percentageToStart * startPoint.z + percentageToEnd * endPoint.z,
             ));
         }
     }
