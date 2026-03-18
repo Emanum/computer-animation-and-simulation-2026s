@@ -104,7 +104,9 @@ export function interpolateHermiteSpline(points, interval) {
             let t = 1 / nOfStepsPerSegment * j;
 
             //wikipedia
-            //On the unit interval from 0 to 1, given a starting point p0 at t = 0 and an ending point p1 at t = 1, with starting tangent m0 at t = 0 and ending tangent m1 at t = 1, the polynomial is defined as p(t) = (2t^3 - 3t^2 + 1)p0 + (t^3 - 2t^2 + t)m0 + (-2t^3 + 3t^2)p1 + (t^3 - t^2)m1, where t is in [0, 1]. This cubic Hermite form guarantees that the curve passes through p0 and p1 and matches the endpoint tangents m0 and m1.
+            //On the unit interval from 0 to 1, given a starting point p0 at t = 0 and an ending point p1 at t = 1, with starting tangent m0 at t = 0 and ending tangent m1 at t = 1, the polynomial is defined as
+            //p(t) = (2t^3 - 3t^2 + 1)p0 + (t^3 - 2t^2 + t)m0 + (-2t^3 + 3t^2)p1 + (t^3 - t^2)m1, where t is in [0, 1].
+            // This cubic Hermite form guarantees that the curve passes through p0 and p1 and matches the endpoint tangents m0 and m1.
 
             let x = (2 * t ** 3 - 3 * t ** 2 + 1) * p0.position.x + (t ** 3 - 2 * t ** 2 + t) * p0.tangentHermite.x + (-2 * t ** 3 + 3 * t ** 2) * p1.position.x + (t ** 3 - t ** 2) * p1.tangentHermite.x;
             let y = (2 * t ** 3 - 3 * t ** 2 + 1) * p0.position.y + (t ** 3 - 2 * t ** 2 + t) * p0.tangentHermite.y + (-2 * t ** 3 + 3 * t ** 2) * p1.position.y + (t ** 3 - t ** 2) * p1.tangentHermite.y;
@@ -214,8 +216,64 @@ export function interpolateBezierSpline(points, interval) {
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateCatmullRom(points, interval) {
-    // Your code here
-    return [];
+    if (interval == null || interval <= 0) {
+        //avoid divide by 0
+        return [];
+    }
+    //we need at least 2 control points otherwise it makes no sense
+    if (points.length < 2) {
+        return [];
+    }
+    let res = [];
+
+    // Catmull rom requires 4 points. So also n-1 and n+2 then we reuse first or last point
+    for (let i = 0; i <= points.length - 2; i++) {
+        const p0 = i === 0 ? points[i] : points[i - 1];
+        const p1 = points[i    ];//segment start
+        const p2 = points[i + 1];//segment end
+        const p3 = i === points.length - 2 ? points[i + 1] : points[i + 2];
+
+
+        //The core idea is: Catmull-Rom is a cubic Hermite spline with automatically chosen endpoint tangents
+        // m1 = 0.5 * (P2 - P0)
+        // m2 = 0.5 * (P3 - P1)
+
+        const m1 = p2.position.clone().sub(p0.position).multiplyScalar(0.5);
+        const m2 = p3.position.clone().sub(p1.position).multiplyScalar(0.5);
+
+        let nOfStepsPerSegment = Math.ceil(1 / interval);
+
+        for (let j = 0; j < nOfStepsPerSegment; j++) {
+            let t = 1 / nOfStepsPerSegment * j;
+
+            //Now we can use the base hermit formula again but with m1 and m2 instead of the tangentHermite
+            // Hermite basis
+            const h00 = 2 * t ** 3 - 3 * t ** 2 + 1;
+            const h10 = t ** 3 - 2 * t ** 2 + t;
+            const h01 = -2 * t ** 3 + 3 * t ** 2;
+            const h11 = t ** 3 - t ** 2;
+
+            let x = h00 * p1.position.x + h10 * m1.x + h01 * p2.position.x + h11 * m2.x;
+            let y = h00 * p1.position.y + h10 * m1.y + h01 * p2.position.y + h11 * m2.y;
+            let z = h00 * p1.position.z + h10 * m1.z + h01 * p2.position.z + h11 * m2.z;
+
+            // OR
+            //wikipedia https://de.wikipedia.org/wiki/Kubisch_Hermitescher_Spline#Catmull-Rom-Spline
+            // C(t) = 0.5 * (2*P1 + (-P0 + P2)*t + (2*P0 - 5*P1 + 4*P2 - P3)*t^2 + (-P0 + 3*P1 - 3*P2 + P3)*t^3)
+            // let x = 0.5 * (2 * p1.position.x + (-p0.position.x + p2.position.x) * t + (2 * p0.position.x - 5 * p1.position.x + 4 * p2.position.x - p3.position.x) * t ** 2 + (-p0.position.x + 3 * p1.position.x - 3 * p2.position.x + p3.position.x) * t ** 3);
+            // let y = 0.5 * (2 * p1.position.y + (-p0.position.y + p2.position.y) * t + (2 * p0.position.y - 5 * p1.position.y + 4 * p2.position.y - p3.position.y) * t ** 2 + (-p0.position.y + 3 * p1.position.y - 3 * p2.position.y + p3.position.y) * t ** 3);
+            // let z = 0.5 * (2 * p1.position.z + (-p0.position.z + p2.position.z) * t + (2 * p0.position.z - 5 * p1.position.z + 4 * p2.position.z - p3.position.z) * t ** 2 + (-p0.position.z + 3 * p1.position.z - 3 * p2.position.z + p3.position.z) * t ** 3);
+
+
+            res.push(new THREE.Vector3(
+                x,
+                y,
+                z
+            ));
+        }
+    }
+
+    return res;
 }
 
 //TASK4 - end
