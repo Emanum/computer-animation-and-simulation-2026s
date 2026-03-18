@@ -129,15 +129,78 @@ export function interpolateHermiteSpline(points, interval) {
 //TASK3 - begin
 /**
  * Implement Bezier interpolation. The @type{ControlPoint} class has properties
- * {@link ControlPoint#tangentBezierForward} and {@link ControlPoint#tangentBezierForward}.
+ * {@link ControlPoint#tangentBezierBackward} and {@link ControlPoint#tangentBezierForward}.
  *
  * @param {ControlPoint[]} points control points
  * @param {number} interval sampling interval
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateBezierSpline(points, interval) {
-    // Your code here
-    return [];
+    if (interval == null || interval <= 0) {
+        //avoid divide by 0
+        return [];
+    }
+    //we need at least 2 control points otherwise it makes no sense
+    if (points.length < 2) {
+        return [];
+    }
+    let res = [];
+
+    // Each Segment is looped over exactly once, independent of the interval
+    // We iterate over each segment (Control point 0->1; 1->2 etc.)
+    // points.length - 1 cause the endPoint needs to fit into the range.
+    for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i];
+        const p1 = points[i + 1];
+
+        //For one cubic Bezier segment, the curve is defined by exactly 4 Bezier control vectors:
+        // B0: start anchor
+        // B1: start handle (controls leaving direction)
+        // B2: end handle (controls arriving direction)
+        // B3: end anchor
+        const b0 = p0.position.clone();
+        const b1 = p0.position.clone().add(p0.tangentBezierForward);
+        const b2 = p1.position.clone().add(p1.tangentBezierBackward);
+        const b3 = p1.position.clone();
+        let nOfStepsPerSegment = Math.ceil(1 / interval);
+
+        for (let j = 0; j < nOfStepsPerSegment; j++) {
+            let t = 1 / nOfStepsPerSegment * j;
+
+            //wikipedia  Kubische Bézierkurven ( n = 3 ) {\displaystyle (n=3)}:
+            //https://de.wikipedia.org/wiki/B%C3%A9zierkurve
+            //[ P(t) = (1-t)^3 B0 + 3(1-t)^2 t B1 + 3(1-t)t^2 B2 + t^3 B3 ]
+            let x = (1 - t) ** 3 * b0.x + 3 * (1 - t) ** 2 * t * b1.x + 3 * (1 - t) * t ** 2 * b2.x + t ** 3 * b3.x;
+            let y = (1 - t) ** 3 * b0.y + 3 * (1 - t) ** 2 * t * b1.y + 3 * (1 - t) * t ** 2 * b2.y + t ** 3 * b3.y;
+            let z = (1 - t) ** 3 * b0.z + 3 * (1 - t) ** 2 * t * b1.z + 3 * (1 - t) * t ** 2 * b2.z + t ** 3 * b3.z;
+
+            res.push(new THREE.Vector3(
+                x,
+                y,
+                z
+            ));
+
+            //more optimal version according to Codex
+            // const u = 1 - t;
+            //
+            // const w0 = u * u * u;
+            // const w1 = 3 * u * u * t;
+            // const w2 = 3 * u * t * t;
+            // const w3 = t * t * t;
+            //
+            // const point = new THREE.Vector3()
+            //     .addScaledVector(b0, w0)
+            //     .addScaledVector(b1, w1)
+            //     .addScaledVector(b2, w2)
+            //     .addScaledVector(b3, w3);
+            // res.push(point);
+        }
+    }
+
+    // Add the last control point (start is indirectly included by first loop)
+    res.push(points[points.length - 1].position.clone());
+
+    return res;
 }
 
 //TASK3 - end
