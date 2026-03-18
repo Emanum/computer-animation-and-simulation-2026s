@@ -82,8 +82,46 @@ export function interpolateLinear(points, interval) {
  * @returns {THREE.Vector3[]} sampled points along the curve
  */
 export function interpolateHermiteSpline(points, interval) {
-    // Your code here
-    return [];
+    if (interval == null || interval <= 0) {
+        //avoid divide by 0
+        return [];
+    }
+    //we need at least 2 control points otherwise it makes no sense
+    if (points.length < 2) {
+        return [];
+    }
+    let res = [];
+
+    // Each Segment is looped over exactly once, independent of the interval
+    // We iterate over each segment (Control point 0->1; 1->2 etc.)
+    // points.length - 1 cause the endPoint needs to fit into the range.
+    for (let i = 0; i < points.length - 1; i++) {
+        let p0 = points[i];
+        let p1 = points[i + 1];
+        let nOfStepsPerSegment = Math.ceil(1 / interval);
+
+        for (let j = 0; j < nOfStepsPerSegment; j++) {
+            let t = 1 / nOfStepsPerSegment * j;
+
+            //wikipedia
+            //On the unit interval from 0 to 1, given a starting point p0 at t = 0 and an ending point p1 at t = 1, with starting tangent m0 at t = 0 and ending tangent m1 at t = 1, the polynomial is defined as p(t) = (2t^3 - 3t^2 + 1)p0 + (t^3 - 2t^2 + t)m0 + (-2t^3 + 3t^2)p1 + (t^3 - t^2)m1, where t is in [0, 1]. This cubic Hermite form guarantees that the curve passes through p0 and p1 and matches the endpoint tangents m0 and m1.
+
+            let x = (2 * t ** 3 - 3 * t ** 2 + 1) * p0.position.x + (t ** 3 - 2 * t ** 2 + t) * p0.tangentHermite.x + (-2 * t ** 3 + 3 * t ** 2) * p1.position.x + (t ** 3 - t ** 2) * p1.tangentHermite.x;
+            let y = (2 * t ** 3 - 3 * t ** 2 + 1) * p0.position.y + (t ** 3 - 2 * t ** 2 + t) * p0.tangentHermite.y + (-2 * t ** 3 + 3 * t ** 2) * p1.position.y + (t ** 3 - t ** 2) * p1.tangentHermite.y;
+            let z = (2 * t ** 3 - 3 * t ** 2 + 1) * p0.position.z + (t ** 3 - 2 * t ** 2 + t) * p0.tangentHermite.z + (-2 * t ** 3 + 3 * t ** 2) * p1.position.z + (t ** 3 - t ** 2) * p1.tangentHermite.z;
+
+            res.push(new THREE.Vector3(
+                x,
+                y,
+                z
+            ));
+        }
+    }
+
+    // Add the last control point (start is indirectly included by first loop)
+    res.push(points[points.length - 1].position.clone());
+
+    return res;
 }
 
 //TASK2 - end
