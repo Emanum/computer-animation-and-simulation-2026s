@@ -3,6 +3,7 @@
 
 Tuwel: https://tuwel.tuwien.ac.at/course/view.php?id=78447
 
+Exercise1: https://emanum.github.io/computer-animation-and-simulation-2026s/exercise1/
 
 # General
 Lecture
