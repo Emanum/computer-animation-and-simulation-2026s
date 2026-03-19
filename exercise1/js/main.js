@@ -10,7 +10,6 @@ import {
     interpolateBezierSpline,
     interpolateCatmullRom
 } from "./interpolation.js";
-import {clamp} from "three/src/math/MathUtils.js";
 
 const InterpolationType = Object.freeze({
     LINEAR: "linear",
@@ -397,7 +396,7 @@ class InterpolationExercise extends Exercise {
         // 'distance domain' e.g each point gets assigned a specific % of the total path
         // and our current time gets a specific % of the distance. constant speed -> linear relation between time and distance,
         // but we can also do easeInOutQuart for example.
-        const t = clamp(elapsedTime / this.#animationMaxTime, 0, 1)
+        const t = THREE.MathUtils.clamp(elapsedTime / this.#animationMaxTime, 0, 1);
 
         //https://easings.net/#easeInOutQuart
         function easeInOutQuart(t) {
