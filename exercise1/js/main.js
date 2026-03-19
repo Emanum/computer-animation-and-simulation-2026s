@@ -18,6 +18,8 @@ class InterpolationExercise extends Exercise {
     static TEST_ANIMATION_GEOMETRY = new THREE.SphereGeometry(1);
     static TEST_ANIMATION_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x049ef4 });
 
+    static ANIMATION_TIME_TOTAL = 5;
+
     /** @type {GUI} */
     #gui = undefined;
 
@@ -38,9 +40,24 @@ class InterpolationExercise extends Exercise {
     /** @type {THREE.Line} */
     #lineObject = undefined;
 
+
+    /**
+     * Vars added for TASK5
+     */
+    /** @type {THREE.Vector3[]} */
+    #sampledCurvePoints = undefined;
+
+
+    /** @type {number} */
+    #currentSamplePointIndex = undefined;
+
+    #animationMaxTime = undefined;
+
+
     #params = {
         interpolation: InterpolationType.LINEAR,
         interval: 0.1,
+        animationSpeed: 1,
         addPoint: () => this.addPointAtRandomPosition(),
         removePoint: () => this.removePoint(),
         startAnimation: () => this.startAnimation(),
@@ -78,6 +95,7 @@ class InterpolationExercise extends Exercise {
             this.updateCurvePositions();
             this.render();
         });
+        this.#gui.add(this.#params, "animationSpeed", 1, 2).step(0.01);
         this.#gui.add(this.#params, "addPoint");
         this.#gui.add(this.#params, "removePoint");
         this.#gui.add(this.#params, "startAnimation");
@@ -246,6 +264,7 @@ class InterpolationExercise extends Exercise {
         }
 
         const sampledPositions = this.sampleCurvePositions();
+        this.#sampledCurvePoints = sampledPositions;
 
         // copy positions into new GPU buffer
         const bufferAttribute = new THREE.BufferAttribute(new Float32Array(sampledPositions.length * 3), 3);
@@ -299,25 +318,47 @@ class InterpolationExercise extends Exercise {
      * You can precompute and store any other information that is required during the animation here.
      */
     onAnimationStart() {
-        // Your code here
+        // Already called in updateCurvePositions so we don't need to call it twice.
+        // this.#sampledCurvePoints = this.sampleCurvePositions();
+        this.#currentSamplePointIndex = 0;
+
+        const totalControlPoints = this.#sampledCurvePoints.length;
+        //our animationSpeed is from 1-2, but we want this logarithmic
+        this.#animationMaxTime = InterpolationExercise.ANIMATION_TIME_TOTAL * (2 - this.#params.animationSpeed) + 0.2;
     }
 
     /**
-     * This method is called continously for every frame as long as the animation is running.
+     * This method is called continuously for every frame as long as the animation is running.
      * It receives the elapsed time since animation start in seconds as well as a 3D object.
      * Update the position of the object based on the elapsed time and sampled positions.
      * See the documentation of {@link THREE.Object3D} for more details on how to update the position.
-     * 
+     *
      * The return value of this function determines if the animation should continue running.
      * Return true to continue, return false to stop (i.e. if end of curve was reached).
-     * 
+     *
      * @param {number} elapsedTime time passed since animation start in seconds
      * @param {THREE.Object3D} object object to move along the curve
      * @returns {boolean} true if animation should continue, false if it should stop
      */
     onAnimationUpdate(elapsedTime, object) {
-        // Your code here
-        return false;
+
+        if (this.#sampledCurvePoints === undefined || this.#sampledCurvePoints.length < 2){
+            return false;
+        }
+
+        if (elapsedTime >= this.#animationMaxTime){
+            return false;
+        }
+
+        //Otherwise find which index fits the best.
+        // this.#animationMaxTime --> 100%
+        // 0 --> 0%
+        //elapsedTime --> x%
+        const percentage = elapsedTime / this.#animationMaxTime;
+        const index = Math.floor(percentage * this.#sampledCurvePoints.length);
+        object.position.copy(this.#sampledCurvePoints[index]);
+
+        return true;
     }
     //TASK5 - end
 }
