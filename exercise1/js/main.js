@@ -1,10 +1,16 @@
 import * as THREE from "three";
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
-import { TransformControls } from "three/addons/controls/TransformControls.js";
+import {GUI} from "three/addons/libs/lil-gui.module.min.js";
+import {TransformControls} from "three/addons/controls/TransformControls.js";
 
-import { ExerciseBase as Exercise } from "./base.js";
-import { ControlPoint } from "./control-point.js";
-import { interpolateLinear, interpolateHermiteSpline, interpolateBezierSpline, interpolateCatmullRom } from "./interpolation.js";
+import {ExerciseBase as Exercise} from "./base.js";
+import {ControlPoint} from "./control-point.js";
+import {
+    interpolateLinear,
+    interpolateHermiteSpline,
+    interpolateBezierSpline,
+    interpolateCatmullRom
+} from "./interpolation.js";
+import {clamp} from "three/src/math/MathUtils.js";
 
 const InterpolationType = Object.freeze({
     LINEAR: "linear",
@@ -13,10 +19,17 @@ const InterpolationType = Object.freeze({
     CATMULL_ROM: "catmull-rom",
 });
 
+const AnimationType = Object.freeze({
+    CONSTANT: "constant",
+    EASE_IN_OUT_QUART: "easeInOutQuart",
+})
+
 class InterpolationExercise extends Exercise {
     static MIN_NUM_POINTS = 4;
     static TEST_ANIMATION_GEOMETRY = new THREE.SphereGeometry(1);
-    static TEST_ANIMATION_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x049ef4 });
+    static TEST_ANIMATION_MATERIAL = new THREE.MeshLambertMaterial({color: 0x049ef4});
+
+    static ANIMATION_TIME_TOTAL = 5;
 
     /** @type {GUI} */
     #gui = undefined;
@@ -38,9 +51,22 @@ class InterpolationExercise extends Exercise {
     /** @type {THREE.Line} */
     #lineObject = undefined;
 
+
+    /**
+     * Vars added for TASK5
+     */
+    /** @type {THREE.Vector3[]} */
+    #sampledCurvePoints = undefined;
+    #computedArcLengthArray = undefined;
+    #computedSumDistanceTravel = undefined;
+    #animationMaxTime = undefined;
+
+
     #params = {
         interpolation: InterpolationType.LINEAR,
+        animationType: AnimationType.CONSTANT,
         interval: 0.1,
+        animationSpeed: 1,
         addPoint: () => this.addPointAtRandomPosition(),
         removePoint: () => this.removePoint(),
         startAnimation: () => this.startAnimation(),
@@ -78,6 +104,8 @@ class InterpolationExercise extends Exercise {
             this.updateCurvePositions();
             this.render();
         });
+        // this.#gui.add(this.#params, "animationType", Object.values(InterpolationType));
+        this.#gui.add(this.#params, "animationSpeed", 1, 2).step(0.01);
         this.#gui.add(this.#params, "addPoint");
         this.#gui.add(this.#params, "removePoint");
         this.#gui.add(this.#params, "startAnimation");
@@ -246,6 +274,7 @@ class InterpolationExercise extends Exercise {
         }
 
         const sampledPositions = this.sampleCurvePositions();
+        this.#sampledCurvePoints = sampledPositions;
 
         // copy positions into new GPU buffer
         const bufferAttribute = new THREE.BufferAttribute(new Float32Array(sampledPositions.length * 3), 3);
@@ -299,26 +328,113 @@ class InterpolationExercise extends Exercise {
      * You can precompute and store any other information that is required during the animation here.
      */
     onAnimationStart() {
-        // Your code here
+        // Already called in updateCurvePositions so we don't need to call it twice.
+        // this.#sampledCurvePoints = this.sampleCurvePositions();
+
+        // const totalControlPoints = this.#sampledCurvePoints.length;
+        //our animationSpeed is from 1-2, but we want this logarithmic
+        this.#animationMaxTime = InterpolationExercise.ANIMATION_TIME_TOTAL * (2 - this.#params.animationSpeed) + 0.2;
+
+        // Build arc-length array, which contains the distance between each pair of consecutive points along the curve.
+        // Simple linear vector based distance (point to point, no curve)
+        this.#computedArcLengthArray = [];
+        for (let i = 0; i + 1 < this.#sampledCurvePoints.length; i++) {
+            this.#computedArcLengthArray.push(new THREE.Vector3().subVectors(this.#sampledCurvePoints[i + 1], this.#sampledCurvePoints[i]).length());
+        }
+
+        // Build cumulative arc-length array, which contains the distance from the start to each point along the curve.
+        let cumulativeDistance = [];
+        let lastDistance = 0;
+        for (let i = 0; i < this.#sampledCurvePoints.length; i++) {
+            cumulativeDistance.push(lastDistance);
+            if (i < this.#computedArcLengthArray.length) {//break on last iteration
+                lastDistance += this.#computedArcLengthArray[i];
+            }
+        }
+
+        //     Normalize it to [0,1] (divide by total length).
+        let totalDistance = cumulativeDistance[cumulativeDistance.length - 1];
+        this.#computedSumDistanceTravel = cumulativeDistance.map(d => d / totalDistance);
     }
 
     /**
-     * This method is called continously for every frame as long as the animation is running.
+     * This method is called continuously for every frame as long as the animation is running.
      * It receives the elapsed time since animation start in seconds as well as a 3D object.
      * Update the position of the object based on the elapsed time and sampled positions.
      * See the documentation of {@link THREE.Object3D} for more details on how to update the position.
-     * 
+     *
      * The return value of this function determines if the animation should continue running.
      * Return true to continue, return false to stop (i.e. if end of curve was reached).
-     * 
+     *
      * @param {number} elapsedTime time passed since animation start in seconds
      * @param {THREE.Object3D} object object to move along the curve
      * @returns {boolean} true if animation should continue, false if it should stop
      */
     onAnimationUpdate(elapsedTime, object) {
-        // Your code here
-        return false;
+
+        if (this.#sampledCurvePoints === undefined || this.#sampledCurvePoints.length < 2) {
+            return false;
+        }
+
+        if (elapsedTime >= this.#animationMaxTime) {
+            // we could set to last point here but the object will get removed from the scene anyway ...
+            return false;
+        }
+
+        //METHOD with variable speed
+        //Otherwise find which index fits the best.
+        // this.#animationMaxTime --> 100%
+        // 0 --> 0%
+        //elapsedTime --> x%
+        // const percentage = elapsedTime / this.#animationMaxTime;
+        // const index = Math.floor(percentage * this.#sampledCurvePoints.length);
+        // We could also use both percentage and index to interpolate between the two closest points for smoother animation
+        // object.position.copy(this.#sampledCurvePoints[index]);
+
+
+        // METHOD with constant speed
+        // Instead or relying on the percentage in the time we transform both (current time, and each point) to the
+        // 'distance domain' e.g each point gets assigned a specific % of the total path
+        // and our current time gets a specific % of the distance. constant speed -> linear relation between time and distance,
+        // but we can also do easeInOutQuart for example.
+        const t = clamp(elapsedTime / this.#animationMaxTime, 0, 1)
+
+        //https://easings.net/#easeInOutQuart
+        function easeInOutQuart(t) {
+            return x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
+        }
+
+        function constant(t) {
+            return t;
+        }
+
+
+        // s is the percentage of the total distance traveled along the curve, according to the time
+        const s = constant(t);
+
+
+        //arc is normalized from 0-1. For each #sampledCurvePoints is containing the total dis
+        const arc = this.#computedSumDistanceTravel;
+
+        let minPointReached = 0;//index of point
+        while (minPointReached + 1 < arc.length && arc[minPointReached + 1] < s) {
+            minPointReached++;
+        }
+        const p0 = this.#sampledCurvePoints[minPointReached];
+        const p1 = this.#sampledCurvePoints[Math.min(minPointReached + 1, this.#sampledCurvePoints.length - 1)];
+        const s0 = arc[minPointReached];
+        const s1 = arc[Math.min(minPointReached + 1, arc.length - 1)];
+
+        //calc alpha for interpolating between our points (linear no curve)
+        const alpha = (s1 > s0) ? (s - s0) / (s1 - s0) : 0;
+
+        // Linearly interpolates between the given vectors, where alpha is the percent distance along the line -
+        // alpha = 0 will be first vector, and alpha = 1 will be the second one.
+        object.position.lerpVectors(p0, p1, alpha);
+
+        return true;
     }
+
     //TASK5 - end
 }
 
