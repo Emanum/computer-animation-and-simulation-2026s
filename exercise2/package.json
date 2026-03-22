@@ -1,0 +1,17 @@
+{
+  "name": "cas-exercise2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node ./scripts/build-submission.mjs"
+  },
+  "dependencies": {
+    "three": "^0.182.0",
+    "mathjs": "^15.1.1"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0"
+  }
+}
+
