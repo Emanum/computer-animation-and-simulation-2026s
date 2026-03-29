@@ -131,14 +131,27 @@ export class KinematicLinkage {
      * See slides and matlab example for more details.
      */
     initCoordinateFrames() {
+        //     Start a list of symbolic frames with the base frame ({}^{W}T_0).
+        //     Iterate through transformations in chain order.
+        //     For each joint, compute next frame by symbolic multiplication of previous world frame and current joint transform.
+        //     Store all resulting symbolic frames in localCoordinateFrames.
+        // oxyz_0 is the base transform (world to base)
+        this.localCoordinateFrames = [];
+        this.localCoordinateFrames.push(this.oxyz_0);
+        let j = 1;
+        for (let i = 0; i < this.transformations.length; i++) {
+            const prevFrame = this.localCoordinateFrames[j - 1];
+            this.localCoordinateFrames[j] = SymbolicMatrix.multiplyMatrices(prevFrame, this.transformations[i]);
+            j++;
+        }
         // Your code here
-        this.localCoordinateFrames = [this.oxyz_0];
+        // this.localCoordinateFrames = [this.oxyz_0];
     }
 
     /**
      * Sets pose of linkage by evaluating each coordinate frame with given DOF values and updating their respective object.
      * 
-     * Evalute the symbolic coordinate frames you stored in {@link localCoordinateFrames} and
+     * Evaluate the symbolic coordinate frames you stored in {@link localCoordinateFrames} and
      * update each corresponding object representing the coordinate frame within the scene, contained in {@link coordinateFrameObjects}.
      * 
      * You can use {@link SymbolicMatrix.evaluate} to substitute values and evaluate the expressions in a symbolic matrix.
@@ -146,7 +159,10 @@ export class KinematicLinkage {
      * @param {Object.<string, number>} degreesOfFreedom values for all degree-of-freedom variables
      */
     forward(degreesOfFreedom) {
-        // Your code here
+        for (let i = 0; i < this.localCoordinateFrames.length; i++) {
+            let resolvedMat4= this.localCoordinateFrames[i].evaluate(degreesOfFreedom, "arrayFlat");
+            this.coordinateFrameObjects[i].matrix.set(...resolvedMat4);
+        }
     }
     //TASK1 - end
 
