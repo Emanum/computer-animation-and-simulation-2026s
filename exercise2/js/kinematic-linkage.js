@@ -145,7 +145,7 @@ export class KinematicLinkage {
      * 
      * @param {Object.<string, number>} degreesOfFreedom values for all degree-of-freedom variables
      */
-    forward(dofValues) {
+    forward(degreesOfFreedom) {
         // Your code here
     }
     //TASK1 - end
