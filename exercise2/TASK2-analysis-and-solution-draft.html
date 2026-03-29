@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>TASK2-analysis-and-solution-draft</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  type="text/javascript"></script>
+</head>
+<body>
+<h1
+id="exercise-2---task-2-analysis-and-solution-draft-no-code">Exercise 2
+- Task 2 Analysis and Solution Draft (No Code)</h1>
+<h2 id="checklist">Checklist</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" checked="" />Analyze Task 2
+requirements from <code>exercise2/Readme.md</code></label></li>
+<li><label><input type="checkbox" checked="" />Analyze relevant
+JavaScript code (<code>exercise2/js/kinematic-linkage.js</code>,
+<code>exercise2/js/main.js</code>,
+<code>exercise2/js/symbolic-matrix.js</code>)</label></li>
+<li><label><input type="checkbox" checked="" />Analyze relevance of
+MATLAB files (<code>exercise2/matlab_code/pointMass1D.m</code>,
+<code>exercise2/matlab_code/pointMass2D.m</code>,
+<code>exercise2/matlab_code/LCPSolve.m</code>)</label></li>
+<li><label><input type="checkbox" checked="" />Draft the mathematical
+process for Task 2 (Jacobian transpose IK) without writing
+code</label></li>
+<li><label><input type="checkbox" checked="" />Add supporting internet
+references for theory and implementation conventions</label></li>
+</ul>
+<h2 id="what-the-task-asks-exercise2readme.md">1) What the task asks
+(<code>exercise2/Readme.md</code>)</h2>
+<p>Task 2 asks for inverse kinematics via Jacobian transpose in
+<code>exercise2/js/kinematic-linkage.js</code>, specifically: -
+<code>initJacobian(...)</code> -
+<code>jacobianTransposeMethod(...)</code></p>
+<p>Expected behavior: 1. Build a symbolic end-effector position function
+from the FK chain. 2. Build its symbolic Jacobian with respect to all
+DOFs. 3. Iteratively update DOF values using Jacobian transpose gradient
+steps to move the end effector toward a target.</p>
+<p>Scope: Task 2 is worth 3 points and must be explainable during
+presentation.</p>
+<h2 id="existing-javascript-architecture-and-implications">2) Existing
+JavaScript architecture and implications</h2>
+<h2 id="runtime-flow-exercise2jsmain.js">2.1 Runtime flow
+(<code>exercise2/js/main.js</code>)</h2>
+<ul>
+<li><code>runInverseKinematics()</code> calls either Jacobian transpose
+(Task 2) or CCD (Task 3).</li>
+<li>For Jacobian transpose, parameters are user-controlled:
+<ul>
+<li><code>iterations</code></li>
+<li><code>alpha</code></li>
+</ul></li>
+<li>Returned DOF values are passed to <code>forward(...)</code> to
+render the updated pose.</li>
+</ul>
+<p>Implication: <code>jacobianTransposeMethod(...)</code> must return a
+complete updated DOF object and be stable over repeated calls.</p>
+<h2
+id="relevant-fields-and-placeholders-exercise2jskinematic-linkage.js">2.2
+Relevant fields and placeholders
+(<code>exercise2/js/kinematic-linkage.js</code>)</h2>
+<p>Task 2 depends on Task 1 outputs: -
+<code>localCoordinateFrames</code> from
+<code>initCoordinateFrames(...)</code>.</p>
+<p>Task 2 fields: - <code>endEffectorPos</code>: symbolic 3x1 position
+function (f()). - <code>jacobian</code>: symbolic 3xN Jacobian (J()). -
+<code>dofNames</code>: list of variables ((_1,,_N)).</p>
+<p>Current placeholders: - <code>initJacobian()</code> currently sets
+zero matrices. - <code>jacobianTransposeMethod(...)</code> only clones
+input and returns it.</p>
+<h2 id="symbolicmatrix-support-exercise2jssymbolic-matrix.js">2.3
+Symbolic/matrix support
+(<code>exercise2/js/symbolic-matrix.js</code>)</h2>
+<p>Useful methods for Task 2: -
+<code>SymbolicMatrix.computeJacobian(vectorValuedFunction, variableNames)</code>
+- <code>SymbolicMatrix.getTranspose(a)</code> -
+<code>evaluate(values, "mathjsMatrix")</code> for matrix math with
+math.js</p>
+<p>Important: Jacobian transpose update needs general matrix
+multiplication (N x 3 times 3 x 1), so using math.js matrices is
+appropriate.</p>
+<h2 id="matlab-code-analysis-and-relevance">3) MATLAB code analysis and
+relevance</h2>
+<h2 id="what-matlab-files-cover">3.1 What MATLAB files cover</h2>
+<ul>
+<li><code>pointMass1D.m</code>, <code>pointMass2D.m</code>: implicit
+integration, contact, friction, iterative updates.</li>
+<li><code>LCPSolve.m</code>: linear complementarity problem solver.</li>
+</ul>
+<h2 id="relevance-to-task-2">3.2 Relevance to Task 2</h2>
+<p>These files are not direct IK/Jacobian implementations. They are
+primarily dynamics/contact solvers.</p>
+<p>Conceptual overlap: - iterative correction of state variables, -
+residual/error-driven updates, - sensitivity to step size and
+convergence criteria.</p>
+<p>That overlap supports explaining why Jacobian transpose IK needs
+careful choice of iteration count and step length ().</p>
+<h2 id="task-2-mathematical-draft-no-code">4) Task 2 mathematical draft
+(no code)</h2>
+<h2 id="end-effector-position-function">4.1 End-effector position
+function</h2>
+<p>Let (= (_1,,_N)^T) be the DOF vector.</p>
+From FK, the final frame transform is: [ {}^{W}T_N() =
+<span class="math display">\[\begin{bmatrix}
+R(\theta) &amp; p(\theta) \\
+0 &amp; 1
+\end{bmatrix}\]</span>
+<p>]</p>
+The end-effector position function is the translation part: [ f()=p()=
+<span
+class="math display">\[\begin{bmatrix}x(\theta)\\y(\theta)\\z(\theta)\end{bmatrix}\]</span>
+<p>^{3} ]</p>
+<p>In this project, <code>endEffectorPos</code> is that symbolic 3x1
+function.</p>
+<h2 id="jacobian-definition">4.2 Jacobian definition</h2>
+The positional Jacobian is: [ J()= =
+<span class="math display">\[\begin{bmatrix}
+\frac{\partial x}{\partial \theta_1} &amp; \cdots &amp; \frac{\partial
+x}{\partial \theta_N} \\
+\frac{\partial y}{\partial \theta_1} &amp; \cdots &amp; \frac{\partial
+y}{\partial \theta_N} \\
+\frac{\partial z}{\partial \theta_1} &amp; \cdots &amp; \frac{\partial
+z}{\partial \theta_N}
+\end{bmatrix}\]</span>
+<p>^{3N} ]</p>
+<p>In this project, compute it symbolically via
+<code>SymbolicMatrix.computeJacobian(endEffectorPos, dofNames)</code>.</p>
+<h2 id="jacobian-transpose-update-rule">4.3 Jacobian transpose update
+rule</h2>
+<p>Define target position (e<sup>*</sup>3), current position (f(_k)),
+and error: [ e_k = e^* - f(_k) ]</p>
+<p>Jacobian transpose descent step: [ _k = J(<em>k)^T e_k ] [
+</em>{k+1}=_k+_k ]</p>
+<p>Repeat for <code>numIterations</code> iterations.</p>
+<p>Interpretation: - This is gradient descent on squared position error
+(|e|^2). - () controls stability/speed.</p>
+<h2 id="process-draft-for-initjacobian...">5) Process draft for
+<code>initJacobian(...)</code></h2>
+<ol type="1">
+<li>Identify symbolic transform of the end-effector frame (last entry in
+<code>localCoordinateFrames</code>).</li>
+<li>Extract the translation column (first 3 rows of column index 3) as a
+symbolic 3x1 matrix.</li>
+<li>Store it in <code>endEffectorPos</code>.</li>
+<li>Differentiate this 3x1 function wrt all variable names in
+<code>dofNames</code>.</li>
+<li>Store the result in <code>jacobian</code>.</li>
+</ol>
+<p>Expected dimensions: - <code>endEffectorPos</code>: 3x1 -
+<code>jacobian</code>: 3xN</p>
+<h2 id="process-draft-for-jacobiantransposemethod...">6) Process draft
+for <code>jacobianTransposeMethod(...)</code></h2>
+<p>Given inputs (<code>dofValues</code>, <code>targetPos</code>,
+<code>numIterations</code>, <code>alpha</code>):</p>
+<ol type="1">
+<li>Convert <code>targetPos</code> to a 3x1 math.js column vector.</li>
+<li>Clone input DOFs into a mutable output map (do not mutate UI-owned
+object directly).</li>
+<li>For each iteration:
+<ul>
+<li>Evaluate <code>endEffectorPos</code> at current DOFs -&gt; current
+3x1 position.</li>
+<li>Compute error (e = e^* - f()).</li>
+<li>Evaluate <code>jacobian</code> at current DOFs -&gt; 3xN
+matrix.</li>
+<li>Transpose Jacobian -&gt; N x 3.</li>
+<li>Compute (= J^T e) -&gt; N x 1.</li>
+<li>Add each (_i) to corresponding DOF in output map.</li>
+</ul></li>
+<li>Return updated DOF map.</li>
+</ol>
+<p>Optional practical stop condition: - If (|e|) falls below small
+threshold, terminate early.</p>
+<h2 id="common-pitfalls-and-how-to-avoid-them">7) Common pitfalls and
+how to avoid them</h2>
+<ul>
+<li>Dimension mismatch:
+<ul>
+<li>Ensure <code>target</code>, <code>f(theta)</code>, and error are
+3x1.</li>
+<li>Ensure <code>J</code> is 3xN and <code>J^T</code> is N x 3.</li>
+</ul></li>
+<li>Wrong DOF ordering:
+<ul>
+<li>Always map vector entries in the exact order of
+<code>dofNames</code>.</li>
+</ul></li>
+<li>Too large <code>alpha</code>:
+<ul>
+<li>Causes oscillation/divergence. Start small and increase
+cautiously.</li>
+</ul></li>
+<li>Too few iterations:
+<ul>
+<li>May stop before meaningful convergence.</li>
+</ul></li>
+<li>Singular/near-singular configurations:
+<ul>
+<li>Jacobian transpose can stagnate; this is expected in some
+poses.</li>
+</ul></li>
+</ul>
+<h2 id="why-this-is-mathematically-valid">8) Why this is mathematically
+valid</h2>
+<p>Task 2 uses first-order local linearization: [ f(+) f() + J() ]</p>
+<p>Choosing (=J^T e) moves parameters in a descent direction for
+position error energy. Repeated updates produce an iterative IK solver
+consistent with the lecture method.</p>
+<h2 id="internet-references-used-for-theory-and-conventions">9) Internet
+references used for theory and conventions</h2>
+<ul>
+<li>THREE.js <code>Matrix4</code> docs:
+https://threejs.org/docs/#api/en/math/Matrix4</li>
+<li>math.js matrices and operations:
+https://mathjs.org/docs/datatypes/matrices.html</li>
+<li>Modern Robotics (Lynch and Park): http://modernrobotics.org</li>
+<li>Jacobian and Jacobian-transpose IK notes (intro resource):
+https://www.cs.cmu.edu/~15464-s13/lectures/lecture6/iksurvey.pdf</li>
+<li>J. J. Craig, <em>Introduction to Robotics: Mechanics and
+Control</em> (Jacobian-based IK chapters)</li>
+</ul>
+<h2 id="short-presentation-ready-explanation">10) Short
+presentation-ready explanation</h2>
+<p>Task 2 is solved by first deriving a symbolic end-effector position
+function from the FK chain and then computing its symbolic Jacobian with
+respect to all joint variables. During runtime, the current Jacobian and
+end-effector position are evaluated numerically, the target-position
+error is computed, and DOFs are updated iteratively with (= J^T e). This
+implements Jacobian-transpose inverse kinematics and integrates directly
+with the existing <code>main.js</code> update loop and
+<code>SymbolicMatrix</code> utilities.</p>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>TASK1-analysis-and-solution-draft</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+<h1
+id="exercise-2---task-1-analysis-and-solution-draft-no-code">Exercise 2
+- Task 1 Analysis and Solution Draft (No Code)</h1>
+<h2 id="checklist">Checklist</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" checked="" />Analyze task requirements
+from <code>exercise2/Readme.md</code></label></li>
+<li><label><input type="checkbox" checked="" />Analyze existing
+JavaScript code (<code>exercise2/js/main.js</code>,
+<code>exercise2/js/kinematic-linkage.js</code>,
+<code>exercise2/js/symbolic-matrix.js</code>)</label></li>
+<li><label><input type="checkbox" checked="" />Analyze MATLAB code
+(<code>exercise2/matlab_code/pointMass1D.m</code>,
+<code>exercise2/matlab_code/pointMass2D.m</code>,
+<code>exercise2/matlab_code/LCPSolve.m</code>)</label></li>
+<li><label><input type="checkbox" checked="" />Draft a mathematical
+process for solving Task 1 (Forward Kinematics) without writing
+code</label></li>
+<li><label><input type="checkbox" checked="" />Add supporting
+information from standard internet references</label></li>
+</ul>
+<h2 id="what-the-task-asks-exercise2readme.md">1) What the task asks
+(<code>exercise2/Readme.md</code>)</h2>
+<p>Task 1 requires implementing forward kinematics in
+<code>exercise2/js/kinematic-linkage.js</code>, specifically in: -
+<code>initCoordinateFrames(...)</code> - <code>forward(...)</code></p>
+<p>Expected behavior: 1. Build symbolic coordinate frame transforms for
+all joints from the base frame and joint transformations. 2. For a given
+set of DOF values, evaluate these symbolic transforms numerically and
+apply them to the scene objects.</p>
+<p>Scope note from README: Task 1 is only 1 point and focuses on FK
+basics. IK methods belong to Task 2 and Task 3.</p>
+<h2 id="existing-javascript-architecture-and-implications">2) Existing
+JavaScript architecture and implications</h2>
+<h2 id="scene-and-chain-setup-exercise2jsmain.js">2.1 Scene and chain
+setup (<code>exercise2/js/main.js</code>)</h2>
+<p>The chain is assembled as a serial linkage: - Base frame initialized
+with identity (<code>SymbolicMatrix.createIdentity(4,4)</code>). - Each
+joint uses one symbolic rotation variable (<code>theta1</code> …
+<code>theta6</code>). - Some joint transforms include fixed translation
+(<code>set(1,3,3)</code>), representing link length offset. -
+<code>addLink(transformation, dofName, rotationAxis, object)</code>
+stores: - symbolic transform, - DOF name, - axis label, - visual object
+attached to that frame.</p>
+<p>After setup: - <code>init()</code> is called to precompute symbolic
+structures. - <code>forward(dofValues)</code> is called to display a
+pose.</p>
+<p>Implication for Task 1: FK must produce frame matrices that correctly
+move the corresponding <code>coordinateFrameObjects</code> so the
+rendered linkage matches DOF values.</p>
+<h2 id="fk-placeholders-in-exercise2jskinematic-linkage.js">2.2 FK
+placeholders in <code>exercise2/js/kinematic-linkage.js</code></h2>
+<p>Task 1 placeholder methods: - <code>initCoordinateFrames()</code>
+currently only stores <code>[this.oxyz_0]</code>. -
+<code>forward(degreesOfFreedom)</code> is empty.</p>
+<p>Key stored fields relevant to FK: - <code>this.oxyz_0</code>:
+symbolic base transform. - <code>this.transformations</code>: symbolic
+per-joint transforms. - <code>this.localCoordinateFrames</code>: should
+contain symbolic frame transforms along chain. -
+<code>this.coordinateFrameObjects</code>: 3D objects whose matrices must
+be updated in <code>forward</code>.</p>
+<p>Constructor detail: -
+<code>rootObject.matrixAutoUpdate = false</code>. -
+<code>rootObject.matrix</code> is set from <code>oxyz_0</code>.</p>
+<p>This means FK must respect matrix assignment directly (no automatic
+TRS updates).</p>
+<h2 id="symbolic-support-exercise2jssymbolic-matrix.js">2.3 Symbolic
+support (<code>exercise2/js/symbolic-matrix.js</code>)</h2>
+<p>Directly useful for Task 1: -
+<code>SymbolicMatrix.multiplyMatrices(a,b)</code>: symbolic matrix
+product. - <code>evaluate(values, "arrayFlat")</code>: numeric
+evaluation with DOF substitutions.</p>
+<p>Not needed for Task 1 but relevant later: -
+<code>computeJacobian(...)</code> for Task 2.</p>
+<p>Implication: Task 1 should be split into 1) symbolic precomputation,
+then 2) numeric evaluation per update.</p>
+<h2 id="matlab-code-analysis-and-relevance">3) MATLAB code analysis and
+relevance</h2>
+<h2 id="what-matlab-files-do">3.1 What MATLAB files do</h2>
+<ul>
+<li><code>pointMass1D.m</code>: implicit integration (BDF1/BDF2), floor
+contact with penalty and QP/impact variants.</li>
+<li><code>pointMass2D.m</code>: 2D contact + friction with both LCP and
+penalty-BDF approaches.</li>
+<li><code>LCPSolve.m</code>: generic linear complementarity problem
+solver.</li>
+</ul>
+<h2 id="relevance-to-task-1">3.2 Relevance to Task 1</h2>
+<p>These files are <strong>not direct FK implementations</strong>. They
+mainly cover dynamics/contact numerics.</p>
+<p>Still, there is a conceptual parallel useful for explanation: -
+predefine model equations/structure, - repeatedly evaluate numerically
+for state updates.</p>
+<p>That mirrors Task 1’s FK workflow: - precompute symbolic transform
+chain once, - evaluate for current DOF values whenever pose updates.</p>
+<h2 id="task-1-solution-draft-process-only-no-code">4) Task 1 solution
+draft (process only, no code)</h2>
+<h2 id="mathematical-model">4.1 Mathematical model</h2>
+<p>For a serial chain with base frame and joint transforms:</p>
+<ul>
+<li><p>Base/world transform: [ {}^{W}T_0 = ]</p></li>
+<li><p>Joint transform from frame (i-1) to (i): [ {}^{i-1}T_i(_i)
+]</p></li>
+<li><p>Recursive FK composition: [ {}^{W}T_i() =
+{}<sup>{W}T_{i-1}(),{}</sup>{i-1}T_i(_i) ]</p></li>
+</ul>
+<p>Each ({}^{W}T_i) is a homogeneous (4) matrix.</p>
+<h2 id="phase-a-initcoordinateframes...-symbolic-precomputation">4.2
+Phase A: <code>initCoordinateFrames(...)</code> (symbolic
+precomputation)</h2>
+<p>Process: 1. Start a list of symbolic frames with the base frame
+({}^{W}T_0). 2. Iterate through <code>transformations</code> in chain
+order. 3. For each joint, compute next frame by symbolic multiplication
+of previous world frame and current joint transform. 4. Store all
+resulting symbolic frames in <code>localCoordinateFrames</code>.</p>
+<p>Result: - <code>localCoordinateFrames[i]</code> becomes a symbolic
+expression matrix for frame (i), containing terms like
+<code>sin(theta_k)</code> and <code>cos(theta_k)</code>.</p>
+<h2 id="phase-b-forwarddegreesoffreedom-numeric-pose-update">4.3 Phase
+B: <code>forward(degreesOfFreedom)</code> (numeric pose update)</h2>
+<p>Given a DOF map (e.g.,
+<code>{theta1: v1, ..., theta6: v6}</code>):</p>
+<ol type="1">
+<li>For each symbolic frame in <code>localCoordinateFrames</code>,
+substitute DOF values and evaluate to numeric (4).</li>
+<li>Assign each evaluated matrix to the corresponding object in
+<code>coordinateFrameObjects</code>.</li>
+<li>Because <code>matrixAutoUpdate</code> is disabled, matrix assignment
+is the essential update mechanism.</li>
+</ol>
+<p>Expected effect: - Axis helpers and attached link meshes move to the
+correct FK pose.</p>
+<h2 id="correct-indexing-and-mapping">4.4 Correct indexing and
+mapping</h2>
+<p>A reliable mapping is required: - symbolic frame index (i) &lt;-&gt;
+visual frame object index (i)</p>
+<p>If indexing is shifted, links will appear detached/offset even if
+math is correct.</p>
+<h2 id="important-convention-caveat-three.js">4.5 Important convention
+caveat (THREE.js)</h2>
+<p><code>THREE.Matrix4</code> uses column-major internal storage;
+<code>Matrix4.set(...)</code> accepts elements in row-major argument
+order according to docs, then stores internally in column-major format.
+Keep one consistent convention when feeding flattened arrays.</p>
+<p>Also, <code>rootObject.matrix</code> already applies base transform.
+Ensure frame transforms assigned to child objects are consistent with
+that hierarchy (avoid unintentionally applying the base twice).</p>
+<h2 id="why-this-process-is-mathematically-correct">5) Why this process
+is mathematically correct</h2>
+<p>Forward kinematics for a serial manipulator is exactly chained
+homogeneous transform multiplication. Since each joint transform is
+symbolic in one DOF, precomputation yields closed-form frame
+expressions, and numerical substitution yields poses for any DOF
+state.</p>
+<p>This is equivalent to standard robotics FK formulations and is the
+correct foundation for Task 2 (Jacobian-based IK) and Task 3 (CCD
+IK).</p>
+<h2 id="internet-references-used-for-theory-and-conventions">6) Internet
+references used for theory and conventions</h2>
+<ul>
+<li>THREE.js Matrix4 documentation:
+https://threejs.org/docs/#api/en/math/Matrix4</li>
+<li>Modern Robotics (Lynch and Park): http://modernrobotics.org</li>
+<li>Kevin M. Lynch, Frank C. Park, <em>Modern Robotics: Mechanics,
+Planning, and Control</em> (FK chapters on rigid transforms and product
+of exponentials)</li>
+<li>John J. Craig, <em>Introduction to Robotics: Mechanics and
+Control</em> (homogeneous transforms and serial manipulators)</li>
+</ul>
+<h2 id="short-presentation-ready-explanation">7) Short
+presentation-ready explanation</h2>
+<p>Task 1 is solved by splitting FK into two stages: (1) symbolic chain
+construction and (2) numeric evaluation for the current DOFs. Symbolic
+matrices are multiplied once to obtain each world-frame expression, then
+each frame is evaluated with current joint angles and written into the
+matching THREE.js object matrix. This is standard serial-chain FK using
+homogeneous transforms and is consistent with the existing
+<code>SymbolicMatrix</code> utilities and the linkage setup in
+<code>main.js</code>.</p>
+</body>
+</html>
