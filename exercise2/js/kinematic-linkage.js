@@ -36,6 +36,7 @@ export class KinematicLinkage {
 
     /** 
      * Stores a 3D symbolic column vector representing the end effector position.
+     * 'endEffectorPos is just the position of the robot hand/tip as a function of joint variables, stored symbolically.'
      * @type{SymbolicMatrix}
      */
     endEffectorPos = undefined;
@@ -179,9 +180,32 @@ export class KinematicLinkage {
      * For more details see slides.
      */
     initJacobian() {
-        // Your code here
-        this.endEffectorPos = SymbolicMatrix.createZeros(3, 1);
-        this.jacobian = SymbolicMatrix.createZeros(3, this.dofNames.length);
+        //our localCoordinateFrames -> 'sums' up the joints along the 'arm'
+        // so the last entry in this array is
+        // "the cumulative transform from base/world to end-effector
+        //, then its translation part is already the end-effector position in world space." -> so this "describes the position
+        // of the end-effector as a function of the joint variables, which is exactly what we need for the Jacobian transpose method."
+
+        // this.localCoordinateFrames is an array with these matrix formats:
+        //       [ r_11  r_12  r_13  t_x ]
+        // T  =  [ r_21  r_22  r_23  t_y ]
+        //       [ r_31  r_32  r_33  t_z ]
+        //       [  0     0     0     1  ]
+        //     t_x, t_y, t_z = position of end effector in world space.
+        //     r_ij = orientation/rotation of end effector axes in world space
+        // SO T is a combination of a rotation matrix and a translation matrix?
+        let lastEntry = this.localCoordinateFrames[this.localCoordinateFrames.length - 1];
+        let x = lastEntry.get(0,3);
+        let y = lastEntry.get(1,3);
+        let z = lastEntry.get(2,3);
+
+        //endEffectorPos should be a 3 x 1 symbolic column vector
+        this.endEffectorPos = new SymbolicMatrix([[x],[y],[z]]);
+        // SymbolicMatrix code:
+        // this.numRows = entries.length;
+        // this.numCols = entries[0].length;
+
+        this.jacobian = SymbolicMatrix.computeJacobian(this.endEffectorPos, this.dofNames);
     }
 
     /**
