@@ -1,6 +1,7 @@
 import * as math from "mathjs";
 import * as THREE from "three";
 import { SymbolicMatrix } from "./symbolic-matrix.js";
+import {evaluate} from "mathjs";
 
 
 export class KinematicLinkage {
@@ -205,6 +206,7 @@ export class KinematicLinkage {
         // this.numRows = entries.length;
         // this.numCols = entries[0].length;
 
+        //"Differentiate this 3x1 function wrt all variable names in dofNames."
         this.jacobian = SymbolicMatrix.computeJacobian(this.endEffectorPos, this.dofNames);
     }
 
@@ -249,7 +251,37 @@ export class KinematicLinkage {
     jacobianTransposeMethod(dofValues, targetPos, numIterations = 30, alpha = 0.001) {
         const target = math.matrix([[targetPos.x], [targetPos.y], [targetPos.z]]);
         let outputValues = structuredClone(dofValues);
+
+        //same each time; no values just symbolic
+        //J^T
+        let jacobianTransposed = SymbolicMatrix.getTranspose(this.jacobian);
+
         //Your code here
+        for (let i = 0; i < numIterations; i++) {
+            //evaluate current DOF values
+            let endEffectorEval = this.endEffectorPos.evaluate(outputValues, "mathjsMatrix");
+
+            //get error
+            let error =  math.subtract(target, endEffectorEval);
+
+            let JT_eval = jacobianTransposed.evaluate(outputValues, "mathjsMatrix");
+            //  Δtheta = alpha * J^T * (e* - f(theta_k))
+            // (e* - f(theta_k)) -> error
+            // alpha -> gradient descent step factor
+            // J^T direction?
+
+            // let deltaTheta = alpha * JT_eval * error
+
+            let deltaTheta = math.multiply(JT_eval, error);
+            deltaTheta = math.multiply(alpha, deltaTheta);
+
+            for (let j = 0; j < this.dofNames.length; j++) {
+                const dofName = this.dofNames[j];
+                outputValues[dofName] += deltaTheta.get([j, 0]);
+            }
+
+        }
+
         return outputValues;
     }
     //TASK2 - end
