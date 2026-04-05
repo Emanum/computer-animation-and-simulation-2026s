@@ -323,101 +323,109 @@ export class KinematicLinkage {
      * @returns {Object.<string, number>} new DOF values
      */
     cyclicCoordinateDescentMethod(dofValues, targetPos, numIterations = 5) {
-        let outputValues = structuredClone(dofValues);
-        const maxDegreeChange = 10; //max 10 degree change per joint and iteration
-         const X_rot = new THREE.Vector3(1, 0, 0);
-         const Y_rot = new THREE.Vector3(0, 1, 0);
-         const Z_rot = new THREE.Vector3(0, 0, 1);
+        const outputValues = structuredClone(dofValues);
+        const maxDegreeChangeRad = THREE.MathUtils.degToRad(10);
+        const eps = 1e-8;
 
-         function calc_positions(context, j) {
-             //TODO we should keep our own copy and not use global DOF values until we are done with all joints
+        const axisByName = {
+            X: new THREE.Vector3(1, 0, 0),
+            Y: new THREE.Vector3(0, 1, 0),
+            Z: new THREE.Vector3(0, 0, 1),
+        };
 
-             //1.
-             //- Compute direction from joint to end effector and to target position
+        // Read constant local translations once; CCD then runs fully with numeric FK updates.
+        const localTranslations = this.transformations.map((transform) => {
+            return new THREE.Vector3(
+                Number(math.evaluate(transform.get(0, 3))),
+                Number(math.evaluate(transform.get(1, 3))),
+                Number(math.evaluate(transform.get(2, 3)))
+            );
+        });
 
-             // Evaluate joint frame j in world space
-             const jointFrame = context.localCoordinateFrames[j + 1].evaluate(outputValues, "array2d");
-             // j+1 because localCoordinateFrames[0] is base frame oxyz_0
+        const baseFrameEntries = this.oxyz_0.evaluate({}, "arrayFlat");
+        const baseFrame = new THREE.Matrix4().set(...baseFrameEntries);
 
-             // Evaluate end-effector frame (last frame) in world space
-             const endFrame = context.localCoordinateFrames[context.localCoordinateFrames.length - 1]
-                 .evaluate(outputValues, "array2d");
+        const makeLocalJointTransform = (jointIndex, values) => {
+            const angle = values[this.dofNames[jointIndex]];
+            const axisName = this.rotationAxes[jointIndex];
+            const translation = localTranslations[jointIndex];
 
-             // Extract positions from translation column (col 3)
-             const jointPosition = new THREE.Vector3(
-                 jointFrame[0][3],
-                 jointFrame[1][3],
-                 jointFrame[2][3]
-             );
+            const localTransform = new THREE.Matrix4();
+            if (axisName === "X") {
+                localTransform.makeRotationX(angle);
+            } else if (axisName === "Y") {
+                localTransform.makeRotationY(angle);
+            } else if (axisName === "Z") {
+                localTransform.makeRotationZ(angle);
+            } else {
+                throw new Error(`Unknown rotation axis '${axisName}'`);
+            }
 
-             const endEffectorPosition = new THREE.Vector3(
-                 endFrame[0][3],
-                 endFrame[1][3],
-                 endFrame[2][3]
-             );
+            localTransform.setPosition(translation);
+            return localTransform;
+        };
 
-             //extract TOP LEFT 3x3 rotation matrix for joint frame
-             const rotationAxis = new THREE.Matrix3().set(
-                 jointFrame[0][0], jointFrame[0][1], jointFrame[0][2],
-                 jointFrame[1][0], jointFrame[1][1], jointFrame[1][2],
-                 jointFrame[2][0], jointFrame[2][1], jointFrame[2][2]
-             );
+        const computeNumericWorldFrames = (values) => {
+            const frames = [baseFrame.clone()];
+            let current = baseFrame.clone();
+            for (let jointIndex = 0; jointIndex < this.transformations.length; jointIndex++) {
+                const localTransform = makeLocalJointTransform(jointIndex, values);
+                current = current.clone().multiply(localTransform);
+                frames.push(current.clone());
+            }
+            return frames;
+        };
 
+        const clampSignedAngle = (signedAngle) => {
+            const abs = Math.min(Math.abs(signedAngle), maxDegreeChangeRad);
+            return Math.sign(signedAngle) * abs;
+        };
 
-             // u: joint -> end effector
-             const u = endEffectorPosition.clone().sub(jointPosition);
+        for (let iteration = 0; iteration < numIterations; iteration++) {
+            let worldFrames = computeNumericWorldFrames(outputValues);
+            const endPos = new THREE.Vector3().setFromMatrixPosition(worldFrames[worldFrames.length - 1]);
+            if (endPos.distanceTo(targetPos) < 1e-3) {
+                break;
+            }
 
-             // v: joint -> target
-             const v = targetPos.clone().sub(jointPosition);
-             //2.
-             //- Transform directions to local space of joint (extract joint rotation, invert = transpose, multiply with directions)
+            for (let j = this.dofNames.length - 1; j >= 0; j--) {
+                const jointFrame = worldFrames[j + 1];
+                const jointPos = new THREE.Vector3().setFromMatrixPosition(jointFrame);
+                const effectorPos = new THREE.Vector3().setFromMatrixPosition(worldFrames[worldFrames.length - 1]);
 
-             const InverseRotation = rotationAxis.invert();
-             u.applyMatrix3(InverseRotation);
-             v.applyMatrix3(InverseRotation);
+                const uWorld = effectorPos.sub(jointPos);
+                const vWorld = targetPos.clone().sub(jointPos);
 
-             return {u, v};
-         }
+                if (uWorld.lengthSq() < eps || vWorld.lengthSq() < eps) {
+                    continue;
+                }
 
-         function calc_joint_difference(j, context){
-             let jointAxis = context.rotationAxes[j];//("X", "Y" or "Z")
+                const worldFromLocal = new THREE.Matrix3().setFromMatrix4(jointFrame);
+                const localFromWorld = worldFromLocal.clone().transpose();
+                const uLocal = uWorld.clone().applyMatrix3(localFromWorld);
+                const vLocal = vWorld.clone().applyMatrix3(localFromWorld);
 
-             //u: vector from current joint position to current end-effector position.
-             //v: vector from current joint position to target position.
+                const axis = axisByName[this.rotationAxes[j]];
+                if (!axis) {
+                    throw new Error(`Unknown rotation axis '${this.rotationAxes[j]}'`);
+                }
 
-             //rotated from world to local
-             const { u, v } = calc_positions(context, j);
+                const uProj = uLocal.clone().sub(axis.clone().multiplyScalar(uLocal.dot(axis)));
+                const vProj = vLocal.clone().sub(axis.clone().multiplyScalar(vLocal.dot(axis)));
+                if (uProj.lengthSq() < eps || vProj.lengthSq() < eps) {
+                    continue;
+                }
 
-             // const X_rot = new THREE.Vector3(1, 0, 0);
-             // const Y_rot = new THREE.Vector3(0, 1, 0); defined once just as comment for understanding
-             // const Z_rot = new THREE.Vector3(0, 0, 1);
-             const rotationAxis = jointAxis === "X" ? X_rot : jointAxis === "Y" ? Y_rot : Z_rot;
+                const cross = uProj.clone().cross(vProj);
+                const signedAngle = Math.atan2(axis.dot(cross), uProj.dot(vProj));
+                const delta = clampSignedAngle(signedAngle);
 
-             //- Project directions to plane perpendicular to rotation axis - now we are in 2D!
-             // Dot Product -> u.dot(rotationAxis) length of the projection
-             // Vector - parallel component = projection to plane perpendicular to rotation axis; 90-degree rotation of rotation axis
-             // geometrically we project both direction vectors (u and v) into a plane
-             const u_proj = u.clone().sub(rotationAxis.clone().multiplyScalar(u.dot(rotationAxis)));
-             const v_proj = v.clone().sub(rotationAxis.clone().multiplyScalar(v.dot(rotationAxis)));
+                outputValues[this.dofNames[j]] += delta;
 
-             //- Compute angle between directions in 2D
-             let angle = u_proj.angleTo(v_proj);
-
-             //- Correct DOF value by this angle; skalar value
-             return Math.sign(rotationAxis.dot(u_proj.clone().cross(v_proj))) * Math.min(angle, THREE.MathUtils.degToRad(maxDegreeChange));
-         }
-
-         //iterate a fixed number of times over each joint
-         for (let i = 0; i < numIterations; i++) {
-             //iterate from tip to base
-             for (let j = this.dofNames.length -1 ; j >= 0; j--) {
-                 const angle_update = calc_joint_difference(j, this);
-                 const dofName = this.dofNames[j];
-                 outputValues[dofName] += angle_update;
-                 // Note we do not need to call forward; as calc_positions just uses the updated outputValues to
-                 // determine world positions with new values
-             }
-         }
+                // Update numeric world frames immediately so parent joints use the new pose.
+                worldFrames = computeNumericWorldFrames(outputValues);
+            }
+        }
 
         return outputValues;
     }
