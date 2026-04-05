@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Task 3 - CCD IK Solution Draft</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      color: #1f2937;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+      background: #ffffff;
+    }
+    h1, h2, h3 { color: #111827; }
+    h1 { margin-bottom: 0.2rem; }
+    .subtitle { color: #4b5563; margin-top: 0; }
+    code {
+      background: #f3f4f6;
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      font-family: Consolas, "Courier New", monospace;
+    }
+    .box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      margin: 1rem 0;
+    }
+    ul, ol { padding-left: 1.25rem; }
+    .eq-note { color: #4b5563; font-size: 0.95rem; }
+  </style>
+
+  <!-- MathJax for LaTeX equation rendering -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+  <h1>Task 3: CCD Inverse Kinematics</h1>
+  <p class="subtitle">Implementation-oriented draft for <code>cyclicCoordinateDescentMethod(...)</code> in <code>exercise2/js/kinematic-linkage.js</code>.</p>
+
+  <h2>1) Goal</h2>
+  <p>
+    Find new DOF values \(\theta\) such that the end-effector position gets close to the target position.
+    CCD does this iteratively: update one joint at a time, usually from tip to base.
+  </p>
+
+  <h2>2) Core Idea of One Joint Update</h2>
+  <p>For current joint \(j\), define in world coordinates:</p>
+  <ul>
+    <li>Joint position: \(\mathbf{p}_j\)</li>
+    <li>Current end-effector position: \(\mathbf{p}_e\)</li>
+    <li>Target position: \(\mathbf{p}_t\)</li>
+  </ul>
+
+  <p>Build vectors from the joint to end-effector/target:</p>
+  \[
+    \mathbf{u} = \mathbf{p}_e - \mathbf{p}_j, \quad
+    \mathbf{v} = \mathbf{p}_t - \mathbf{p}_j
+  \]
+
+  <p>For an unconstrained 3D joint, the alignment angle could be computed from:</p>
+  \[
+    \cos\Delta\theta =
+    \frac{\mathbf{u}\cdot\mathbf{v}}{\|\mathbf{u}\|\,\|\mathbf{v}\|}
+  \]
+  <p class="eq-note">Clamp the cosine argument to \([-1, 1]\) to avoid numerical issues.</p>
+
+  <h2>3) Axis Constraint for This Exercise</h2>
+  <p>
+    In this task, each joint is revolute with exactly one allowed local axis
+    (<code>X</code>, <code>Y</code>, or <code>Z</code>). So we do not apply arbitrary 3D rotations.
+    We solve in the plane perpendicular to that axis.
+  </p>
+
+  <ol>
+    <li>Get current joint rotation matrix \(R_j\) (world orientation of joint frame).</li>
+    <li>Convert vectors to local coordinates:
+      \[
+        \mathbf{u}_{loc} = R_j^T \mathbf{u}, \quad
+        \mathbf{v}_{loc} = R_j^T \mathbf{v}
+      \]
+    </li>
+    <li>Choose 2D components based on allowed axis:
+      <ul>
+        <li>axis <code>X</code>: use \((y,z)\)</li>
+        <li>axis <code>Y</code>: use \((x,z)\)</li>
+        <li>axis <code>Z</code>: use \((x,y)\)</li>
+      </ul>
+    </li>
+    <li>Compute signed 2D angle \(\Delta\theta_j\) and update only that DOF:
+      \[
+        \theta_j \leftarrow \theta_j + \Delta\theta_j
+      \]
+    </li>
+  </ol>
+
+  <div class="box">
+    <strong>Why this works:</strong> the local axis constraint is enforced naturally because
+    only the planar angle around that axis is changed.
+  </div>
+
+  <h2>4) Full CCD Loop (Tip to Base)</h2>
+  <ol>
+    <li>Start from current <code>dofValues</code> (copy to <code>outputValues</code>).</li>
+    <li>Repeat for <code>numIterations</code>:</li>
+    <li>Evaluate current FK (pose) with <code>outputValues</code>.</li>
+    <li>Check end-effector error:
+      \[
+        e = \|\mathbf{p}_t - \mathbf{p}_e\|
+      \]
+      If \(e < \varepsilon\), stop.
+    </li>
+    <li>For joints from last to first:
+      <ul>
+        <li>Compute \(\mathbf{u}, \mathbf{v}\).</li>
+        <li>Compute constrained \(\Delta\theta_j\).</li>
+        <li>Update only this joint DOF.</li>
+        <li>Recompute FK before processing the next parent joint.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h2>5) Mapping to Your Existing Fields</h2>
+  <ul>
+    <li><code>this.dofNames[j]</code>: gives the DOF variable to update.</li>
+    <li><code>this.rotationAxes[j]</code>: gives local axis constraint (<code>X</code>, <code>Y</code>, <code>Z</code>).</li>
+    <li><code>this.localCoordinateFrames</code>: symbolic transforms; evaluate with current DOFs to get current world joint/end-effector positions.</li>
+    <li><code>this.forward(outputValues)</code>: update scene objects after optimization step or at the end.</li>
+  </ul>
+
+  <h2>6) Stability Rules (Important)</h2>
+  <ul>
+    <li>If \(\|\mathbf{u}\|\) or \(\|\mathbf{v}\|\) is near zero, skip that joint update.</li>
+    <li>Clamp acos input to \([-1,1]\).</li>
+    <li>Optionally clamp \(|\Delta\theta_j|\) (for smoother behavior and less oscillation).</li>
+    <li>Always keep a max iteration count for unreachable targets.</li>
+  </ul>
+
+  <h2>7) Minimal Mathematical Summary</h2>
+  \[
+    \mathbf{u} = \mathbf{p}_e - \mathbf{p}_j,\quad
+    \mathbf{v} = \mathbf{p}_t - \mathbf{p}_j,\quad
+    \theta_j \leftarrow \theta_j + \Delta\theta_j
+  \]
+  <p>
+    with \(\Delta\theta_j\) computed in the local 2D plane orthogonal to the joint's fixed axis.
+  </p>
+
+</body>
+</html>
+
