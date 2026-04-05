@@ -1,7 +1,6 @@
 import * as math from "mathjs";
 import * as THREE from "three";
-import { SymbolicMatrix } from "./symbolic-matrix.js";
-import {evaluate} from "mathjs";
+import {SymbolicMatrix} from "./symbolic-matrix.js";
 
 
 export class KinematicLinkage {
@@ -330,7 +329,6 @@ export class KinematicLinkage {
          const Y_rot = new THREE.Vector3(0, 1, 0);
          const Z_rot = new THREE.Vector3(0, 0, 1);
 
-
          function calc_positions(context, j) {
              //TODO we should keep our own copy and not use global DOF values until we are done with all joints
 
@@ -416,8 +414,8 @@ export class KinematicLinkage {
                  const angle_update = calc_joint_difference(j, this);
                  const dofName = this.dofNames[j];
                  outputValues[dofName] += angle_update;
-                 //TODO we should keep our own copy and not modify global DOF values until we are done with all joints
-                 this.forward(outputValues); //update positions after each joint adjustment
+                 // Note we do not need to call forward; as calc_positions just uses the updated outputValues to
+                 // determine world positions with new values
              }
          }
 
