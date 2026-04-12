@@ -38,6 +38,8 @@ async function build() {
   await writeFile(path.join(outDir, "index.html"), submissionHtml, "utf-8");
   await cp(path.join(rootDir, "main.css"), path.join(outDir, "main.css"));
   await cp(path.join(rootDir, "js"), path.join(outDir, "js"), { recursive: true });
+  await cp(path.join(rootDir, "models"), path.join(outDir, "models"), { recursive: true });
+  await cp(path.join(rootDir, "shaders"), path.join(outDir, "shaders"), { recursive: true });
 
   console.log(`Built submission in ${outDir}`);
   console.log(`Using CDN three@${threeVersion}`);
