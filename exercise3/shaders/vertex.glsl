@@ -37,8 +37,38 @@ vec4 taper(vec4 pos, float k) {
 
 vec4 twist(vec4 pos, float k) {
     //TASK2 - begin
+    // We want a rotation around the Y axis, 
+    // where the angle of rotation is proportional to the Y coordinate of the vertex.
 
-    return pos; // just here to avoid compile errors
+     // Transform matrix:
+    // x' = x * cos(kz) - y * sin(kz)
+    // y' = x * sin(kz) + y * cos(kz)
+    // z' = z
+    // But their Z is our Y. 
+
+    // same as above but with PI cause or rotation around Y axis
+    //1.0 seems to be 180 degree rotation,
+    //2.0 would be 360 degree rotation for full rotation
+    float rotationMultiplier = 1.0;
+    float angle = mix(0.0, rotationMultiplier * M_PI, k) * (pos.y - minCoord.y) / (maxCoord.y - minCoord.y);
+    float cosAngle = cos(angle);
+    float sinAngle = sin(angle);
+    //y stays the same -> do not change hight
+    //x and z are rotated around the Y axis
+    mat4 T = mat4 (cosAngle, 0, -sinAngle, 0,
+                    0, 1, 0, 0, 
+                    sinAngle, 0, cosAngle, 0,
+                    0, 0, 0, 1);
+
+    //This is the same as the base rotation matrix around Y axis
+    //          cos(θ)   0   sin(θ)   0  
+    // Ry(θ) =    0      1     0      0  
+    //         -sin(θ)   0   cos(θ)   0  
+    //            0      0     0      1  
+                   
+    vec4 erg = T * pos;
+
+    return erg; // just here to avoid compile errors
 
     //TASK2 - end
 }
