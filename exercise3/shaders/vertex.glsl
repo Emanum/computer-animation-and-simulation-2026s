@@ -78,6 +78,72 @@ vec4 bend(vec4 pos, float k) {
     float ymin = (1.0 - k) * maxCoord.y + k * minCoord.y; // = zmin in the book
     float ymax = maxCoord.y; // = zmax in the book
     //TASK3 - begin
+    //In Figure 4.18 in the book y′ and z′ show z < zmax in the first row, this should be z < zmin.
+    //we have a "3 way" function. 
+    //case1 y < ymin -> no change
+    //case2 ymin <= y <= ymax -> rotate around Z axis
+    //case3 y > ymax ->  rotate around Z axis with the same angle as in case 2 but with the rotation point at ymax instead of ymin.
+
+    // Formular from book in ascii:
+    //     [Context]
+    // (z_min : z_max) - bend region
+    // (y_0, z_min)    - center of bend
+    
+    // [Variables]
+    // R = y_0 - y
+    // C_theta = cos(theta)
+    // S_theta = sin(theta)
+    
+    // --------------------------------------------------------------------------------
+    // x-coordinate:
+    // x' = x
+    
+    // --------------------------------------------------------------------------------
+    // y-coordinate (piecewise):
+    //      / y                                             z < z_min
+    // y' = | y_0 - (R * C_theta)                           z_min <= z <= z_max
+    //      \ y_0 - (R * C_theta) + (z - z_max) * S_theta   z > z_max
+    
+    // --------------------------------------------------------------------------------
+    // z-coordinate (piecewise):
+    //      / z                                             z < z_min
+    // z' = | z_min + (R * S_theta)                         z_min <= z <= z_max
+    //      \ z_min + (R * S_theta) + (z - z_max) * C_theta   z > z_max
+    
+    // --------------------------------------------------------------------------------
+    // Angle theta (piecewise):
+    //         / 0                z < z_min
+    // theta = | z_max - z_min    z > z_max
+    //         \ z - z_min        otherwise (z_min <= z <= z_max)
+
+     // Big if over all cases
+     if (pos.y < ymin) {
+        return pos; // no change
+     }
+     else if (pos.y >= ymin && pos.y <= ymax) {
+        float R = z0 - pos.z;
+        // The formula implies theta = z - z_min (which is pos.y - ymin here).
+        // By negating the angle, we invert the bend direction so it bends UP instead of DOWN.
+        float theta = -(pos.y - ymin);
+        float C_theta = cos(theta);
+        float S_theta = sin(theta);
+        
+        vec4 result = pos;
+        result.z = z0 - (R * C_theta);
+        result.y = ymin + (R * S_theta);
+        return result;
+     }
+     else if (pos.y > ymax) {
+        float R = z0 - pos.z;
+        float theta = -(ymax - ymin);
+        float C_theta = cos(theta);
+        float S_theta = sin(theta);
+        
+        vec4 result = pos;
+        result.z = z0 - (R * C_theta) + (pos.y - ymax) * S_theta;
+        result.y = ymin + (R * S_theta) + (pos.y - ymax) * C_theta;
+        return result;
+     }
 
     return pos; // just here to avoid compile errors
     
