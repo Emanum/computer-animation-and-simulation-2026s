@@ -29,4 +29,5 @@ export const SHADERS = {
 
 export const MODELS = {
     teapot: await fetchObjModel("../models/teapot.obj"),
+    poyoyo16: await fetchObjModel("../models/poyoyo16.obj"),
 };

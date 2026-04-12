@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
+import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 import { ExerciseBase as Exercise } from "./base.js";
 import { MODELS, SHADERS } from "./resources.js";
 import { FfdVolume } from "./volume.js";
@@ -18,6 +19,7 @@ const GeometryType = Object.freeze({
     CYLINDER: "cylinder",
     CYLINDER_HIGH_RES: "cylinder_high_res",
     TEAPOT: "teapot",
+    POYOYO16: "poyoyo16",
 });
 
 
@@ -128,6 +130,7 @@ class DeformationExercise extends Exercise {
         this.#geometries[GeometryType.CYLINDER] = new THREE.CylinderGeometry(0.5, 0.5, 1, 32, 1);
         this.#geometries[GeometryType.CYLINDER_HIGH_RES] = new THREE.CylinderGeometry(0.5, 0.5, 1, 32, 32);
         this.#geometries[GeometryType.TEAPOT] = MODELS.teapot.children[0].geometry;
+        this.#geometries[GeometryType.POYOYO16] = BufferGeometryUtils.mergeGeometries(MODELS.poyoyo16.children.map(child => child.geometry));
 
         Object.values(this.#geometries).forEach(geometry => geometry.computeBoundingBox());
         Object.keys(this.#geometries).forEach(key => console.log(key, this.#geometries[key].boundingBox));
