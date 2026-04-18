@@ -116,7 +116,6 @@ vec4 bend(vec4 pos, float k) {
     // theta = | z_max - z_min    z > z_max
     //         \ z - z_min        otherwise (z_min <= z <= z_max)
 
-     // Big if over all cases
      if (pos.y < ymin) {
         return pos; // no change
      }
