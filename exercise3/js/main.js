@@ -11,6 +11,7 @@ const DeformationType = Object.freeze({
     TAPER: "taper",
     TWIST: "twist",
     BEND: "bend",
+    CUSTOM: "custom",
 });
 
 /** Different geometries - expected to have vertices between -1 and 1 */
@@ -162,6 +163,7 @@ class DeformationExercise extends Exercise {
         if (deformationType == DeformationType.TAPER) this.#globalDeformUniforms.deformType.value = 0;
         else if (deformationType == DeformationType.TWIST) this.#globalDeformUniforms.deformType.value = 1;
         else if (deformationType == DeformationType.BEND) this.#globalDeformUniforms.deformType.value = 2;
+        else if (deformationType == DeformationType.CUSTOM) this.#globalDeformUniforms.deformType.value = 3;
 
         const geometry = this.#geometries[this.#params.geometryType];
         this.#deformObject.geometry = geometry;

@@ -149,6 +149,16 @@ vec4 bend(vec4 pos, float k) {
     //TASK3 - end
 }
 
+vec4 transformCustom(vec4 pos, float k) {
+    // spiral deformation
+    float angle = mix(0.0, 2.0 * M_PI, k) * (pos.y - minCoord.y) / (maxCoord.y - minCoord.y);
+    float radius = 0.3;
+    vec4 result = pos;
+    result.x = pos.x + radius * sin(angle);
+    result.z = pos.z + radius * cos(angle);
+    return result;
+}
+
 void main() {
     vec4 result;
     if (deformType == 0)
@@ -157,6 +167,8 @@ void main() {
         result = twist(vec4(position, 1), k);
     else if (deformType == 2)
         result = bend(vec4(position, 1), k);
+    else if (deformType == 3)
+        result = transformCustom(vec4(position, 1), k);
 
     worldPosition = result.xyz;
     gl_Position = projectionMatrix * modelViewMatrix * result;
