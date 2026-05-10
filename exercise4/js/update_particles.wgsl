@@ -1,3 +1,10 @@
+
+/** Different force field types */
+// export const ForceFieldType = Object.freeze({
+//     DIRECTIONAL: { name: "directional", value: 1, color: color(0xe41a1c) },
+//     EXPANSION: { name: "expansion", value: 2, color: color(0x4daf4a) },
+//     CONTRACTION: { name: "contraction", value: 3, color: color(0x984ea3) },
+// });
 /**
  * TSL struct for force fields used for applying forces to particles in shaders.
  */
@@ -65,6 +72,20 @@ fn updateParticles(
 
             //TASK 2 - begin
             //TODO Add force field forces, use parameters "numForceFields" and "forceFields"
+            for (var i = 0; i < numForceFields; i = i + 1) {
+                let forceField = forceFields[i];
+                let toParticle = position - forceField.position;
+                let distance = length(toParticle);
+                if (distance < forceField.radius) {
+                    if (forceField.fieldType == DIRECTIONAL) {
+                        totalForce += forceField.force;
+                    } else if (forceField.fieldType == EXPANSION) {
+                        totalForce += normalize(toParticle) * length(forceField.force);
+                    } else if (forceField.fieldType == CONTRACTION) {
+                        totalForce += (-normalize(toParticle)) * length(forceField.force);
+                    }
+                }
+            }
             // See ForceFieldStruct in force-field.js for available struct fields.
             // For the type, you can compare against the above defined constants DIRECTIONAL, EXPANSION and CONTRACTION.
             // For expansion and contraction, use only the magnitude of forceField.force, you can ignore its direction.
