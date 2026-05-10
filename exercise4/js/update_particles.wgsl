@@ -1,13 +1,12 @@
-import { wgslFn } from "three/tsl"
-import { ForceFieldStruct } from "./force-field.js";
-import { BoxObstacleStruct } from "./obstacle.js";
-
-// bug in THREE.js: parenthesis in comments in function declaration break wgslFn nodes
-// seemingly, when parsing the function signature, they stop at the first closing paranthesis i.e. ')' character
-// workaround: just use [] lol
-//TODO: open issue at THREE.js repo
-
-export const updateParticlesWGSL = wgslFn(/* wgsl */`
+/**
+ * TSL struct for force fields used for applying forces to particles in shaders.
+ */
+// export const ForceFieldStruct = struct({
+//     fieldType: "int",
+//     position: "vec3",
+//     radius: "float",
+//     force: "vec3",
+// }, "ForceFieldStruct");
 
 fn updateParticles(
     particleIndex: u32, // index of particle to update
@@ -61,6 +60,7 @@ fn updateParticles(
             //|velocity|2 × DragCoefficient and its direction is opposite to the direction of velocity.
             let dragForce = dragCoeff * length(velocity) * length(velocity) * (-normalize(velocity));
             totalForce += dragForce;
+
             //TASK 1 - end
 
             //TASK 2 - begin
@@ -90,16 +90,3 @@ fn updateParticles(
         }
     }
 }
-`, [
-    ForceFieldStruct(),
-    BoxObstacleStruct(),
-    wgslFn(/*wgsl*/`
-fn exampleFunction(vector: vec3f) -> vec3f {
-    return vector;
-}
-`)
-]
-);
-
-
-
