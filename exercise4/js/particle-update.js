@@ -95,8 +95,62 @@ fn updateParticles(
             // See BoxObstacleStruct in obstacle.js for available struct fields.
             // Compute new velocity and new position accordingly.
             // You can also add new functions, but you need to define them as a separate wgslFn (see below for example).
-            var newVelocity = exampleFunction(newVelocityNoCollision);
-            var newPosition = position + newVelocity * deltaTime;
+            var newVelocity = newVelocityNoCollision;
+            var newPosition = newPositionNoCollision;
+
+            for (var i = 0; i < numObstacles; i = i + 1) {
+                let obs = obstacles[i];
+                let minC = obs.minCorner;
+                let maxC = obs.maxCorner;
+
+                //Check if inside
+                if (newPosition.x > minC.x && newPosition.x < maxC.x &&
+                    newPosition.y > minC.y && newPosition.y < maxC.y &&
+                    newPosition.z > minC.z && newPosition.z < maxC.z) {
+                    
+                    // distance to each face
+                    let dx0 = newPosition.x - minC.x;
+                    let dx1 = maxC.x - newPosition.x;
+                    let dy0 = newPosition.y - minC.y;
+                    let dy1 = maxC.y - newPosition.y;
+                    let dz0 = newPosition.z - minC.z;
+                    let dz1 = maxC.z - newPosition.z;
+
+                    // Find the minimum distance to determine which face the particle is closest to.
+                    let minDist = min(min(min(dx0, dx1), min(dy0, dy1)), min(dz0, dz1));
+
+                    var normal = vec3f(0.0, 0.0, 0.0);
+                    
+                    // Determine the normal vector of the face that was hit,
+                    // and correct the position to sit exactly on the surface of the obstacle.
+                    if (minDist == dx0) {
+                        normal = vec3f(-1.0, 0.0, 0.0);
+                        newPosition.x = minC.x;
+                    } else if (minDist == dx1) {
+                        normal = vec3f(1.0, 0.0, 0.0);
+                        newPosition.x = maxC.x;
+                    } else if (minDist == dy0) {
+                        normal = vec3f(0.0, -1.0, 0.0);
+                        newPosition.y = minC.y;
+                    } else if (minDist == dy1) {
+                        normal = vec3f(0.0, 1.0, 0.0);
+                        newPosition.y = maxC.y;
+                    } else if (minDist == dz0) {
+                        normal = vec3f(0.0, 0.0, -1.0);
+                        newPosition.z = minC.z;
+                    } else if (minDist == dz1) {
+                        normal = vec3f(0.0, 0.0, 1.0);
+                        newPosition.z = maxC.z;
+                    }
+
+                    // Apply the collision response to the velocity if the particle is moving into the face.
+                    // The formula reflects the velocity along the normal and applies the bounciness factor.
+                    let vDotN = dot(newVelocity, normal);
+                    if (vDotN < 0.0) {
+                        newVelocity = newVelocity - (1.0 + bounciness) * vDotN * normal;
+                    }
+                }
+            }
             //TASK 3 - end
 
             positions[particleIndex] = newPosition;
