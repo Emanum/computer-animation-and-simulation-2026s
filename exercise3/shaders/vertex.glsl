@@ -49,7 +49,7 @@ vec4 twist(vec4 pos, float k) {
     // same as above but with PI cause or rotation around Y axis
     //1.0 seems to be 180 degree rotation,
     //2.0 would be 360 degree rotation for full rotation
-    float rotationMultiplier = 1.0;
+    float rotationMultiplier = 2.0;
     float angle = mix(0.0, rotationMultiplier * M_PI, k) * (pos.y - minCoord.y) / (maxCoord.y - minCoord.y);
     float cosAngle = cos(angle);
     float sinAngle = sin(angle);
