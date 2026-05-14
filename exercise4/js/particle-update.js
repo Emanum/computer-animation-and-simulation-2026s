@@ -116,13 +116,19 @@ fn updateParticles(
                     let dz0 = newPosition.z - minC.z;
                     let dz1 = maxC.z - newPosition.z;
 
-                    // Find the minimum distance to determine which face the particle is closest to.
-                    let minDist = min(min(min(dx0, dx1), min(dy0, dy1)), min(dz0, dz1));
+                    // Find closest face
+                    let distanceToFaces = vec3f(
+                        min(dx0, dx1),  // minimum distance to x-axis faces (left or right)
+                        min(dy0, dy1),  // minimum distance to y-axis faces (top or bottom)
+                        min(dz0, dz1)   // minimum distance to z-axis faces (front or back)
+                    );
+                    let minDist = min(min(distanceToFaces.x, distanceToFaces.y), distanceToFaces.z);
 
                     var normal = vec3f(0.0, 0.0, 0.0);
                     
-                    // Determine the normal vector of the face that was hit,
-                    // and correct the position to sit exactly on the surface of the obstacle.
+                    // hardcode normals depending on closest face. We assume the box is not rotated
+                    // so the normal lies directly on one of the axis => hardcode instead of calculation
+                    //Also we cap the position to the face so it doesn't move into the box
                     if (minDist == dx0) {
                         normal = vec3f(-1.0, 0.0, 0.0);
                         newPosition.x = minC.x;
@@ -143,8 +149,8 @@ fn updateParticles(
                         newPosition.z = maxC.z;
                     }
 
-                    // Apply the collision response to the velocity if the particle is moving into the face.
-                    // The formula reflects the velocity along the normal and applies the bounciness factor.
+                    // Apply collision. 
+                    // The formula geometrically reflects the particle along the normal, so 90degree 
                     let vDotN = dot(newVelocity, normal);
                     if (vDotN < 0.0) {
                         newVelocity = newVelocity - (1.0 + bounciness) * vDotN * normal;

@@ -20,7 +20,6 @@
 //     maxCorner: "vec3",
 // }, "BoxObstacleStruct");
 
-
 fn updateParticles(
     particleIndex: u32, // index of particle to update
 
@@ -116,10 +115,12 @@ fn updateParticles(
                 let minC = obs.minCorner;
                 let maxC = obs.maxCorner;
 
+                //Check if inside
                 if (newPosition.x > minC.x && newPosition.x < maxC.x &&
                     newPosition.y > minC.y && newPosition.y < maxC.y &&
                     newPosition.z > minC.z && newPosition.z < maxC.z) {
-                    
+
+                    // distance to each face
                     let dx0 = newPosition.x - minC.x;
                     let dx1 = maxC.x - newPosition.x;
                     let dy0 = newPosition.y - minC.y;
@@ -127,9 +128,19 @@ fn updateParticles(
                     let dz0 = newPosition.z - minC.z;
                     let dz1 = maxC.z - newPosition.z;
 
-                    let minDist = min(min(min(dx0, dx1), min(dy0, dy1)), min(dz0, dz1));
+                    // Find closest face
+                    let distanceToFaces = vec3f(
+                        min(dx0, dx1),  // minimum distance to x-axis faces (left or right)
+                        min(dy0, dy1),  // minimum distance to y-axis faces (top or bottom)
+                        min(dz0, dz1)   // minimum distance to z-axis faces (front or back)
+                    );
+                    let minDist = min(min(distanceToFaces.x, distanceToFaces.y), distanceToFaces.z);
 
                     var normal = vec3f(0.0, 0.0, 0.0);
+
+                    // hardcode normals depending on closest face. We assume the box is not rotated
+                    // so the normal lies directly on one of the axis => hardcode instead of calculation
+                    //Also we cap the position to the face so it doesn't move into the box
                     if (minDist == dx0) {
                         normal = vec3f(-1.0, 0.0, 0.0);
                         newPosition.x = minC.x;
@@ -150,6 +161,8 @@ fn updateParticles(
                         newPosition.z = maxC.z;
                     }
 
+                    // Apply collision.
+                    // The formula geometrically reflects the particle along the normal, so 90degree
                     let vDotN = dot(newVelocity, normal);
                     if (vDotN < 0.0) {
                         newVelocity = newVelocity - (1.0 + bounciness) * vDotN * normal;
